@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Sign In — Pocket Mechanic{% endblock %}
+
+{% block content %}
+<div class="container py-5 d-flex align-items-center justify-content-center min-vh-75">
+  <div class="pm-card shadow-lg p-4 p-md-5" style="max-width: 440px; width: 100%;">
+    <div class="text-center mb-4">
+      <div class="mx-auto mb-3" style="width: 48px; height: 48px;">
+        <img src="{{ url_for('static', filename='images/wrenchy_brand.png') }}" style="width: 48px; height: 48px; object-fit: contain;" alt="Pocket Mechanic">
+      </div>
+      <h2 class="fs-4 fw-bold text-white mb-1">Rider Authentication</h2>
+      <p class="text-secondary small mb-1">Access vehicle profiles, live diagnostics, and telemetry.</p>
+      <span class="pm-pill pm-pill-active" style="font-size: 0.68rem;">Local Offline MySQL</span>
+    </div>
+
+    <form method="POST" action="{{ url_for('auth.login') }}">
+      <div class="mb-3">
+        <label for="email" class="form-label text-secondary small fw-medium">Email Address</label>
+        <input type="email" class="form-control form-control-pm" id="email" name="email" value="{{ request.args.get('email', '') }}" placeholder="name@example.com" required autofocus>
+      </div>
+
+      <div class="mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-1">
+          <label for="password" class="form-label text-secondary small fw-medium mb-0">Password</label>
+        </div>
+        <input type="password" class="form-control form-control-pm" id="password" name="password" placeholder="••••••••" required>
+      </div>
+
+      <button type="submit" class="btn btn-pm-primary w-100 py-2 justify-content-center mb-3">
+        Sign In to Pocket Mechanic
+      </button>
+
+      <div class="text-center text-secondary small">
+        Don't have an account?
+        <a href="{{ url_for('auth.register') }}" class="text-cyan text-decoration-none fw-medium ms-1">Register here</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

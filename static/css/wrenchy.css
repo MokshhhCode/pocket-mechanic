@@ -1,0 +1,232 @@
+/* ==========================================================================
+   WRENCHY AI: ANIMATED MOTORCYCLE MECHANIC CHARACTER
+   Keyframes: Idle Breathing, 5-Second Periodic Wave, Speaking Mouth/Arms
+   Interactive Micro-Animations & Theme-Aware Modal Styling
+   ========================================================================== */
+
+:root {
+  --border-color: var(--border-card, rgba(255, 255, 255, 0.12));
+}
+
+.wrenchy-widget-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 1040;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.wrenchy-bubble {
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: 12px;
+  padding: 10px 14px;
+  max-width: 280px;
+  font-size: 0.82rem;
+  color: var(--text-primary);
+  margin-bottom: 10px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  position: relative;
+  display: none;
+  animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.2s ease;
+}
+
+.wrenchy-bubble::after {
+  content: "";
+  position: absolute;
+  bottom: -6px;
+  right: 28px;
+  width: 12px;
+  height: 12px;
+  background: var(--bg-card);
+  border-right: 1px solid var(--border-card);
+  border-bottom: 1px solid var(--border-card);
+  transform: rotate(45deg);
+}
+
+.wrenchy-avatar-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  outline: none;
+  position: relative;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.25s ease;
+}
+
+.wrenchy-avatar-btn:hover {
+  transform: scale(1.12);
+  filter: drop-shadow(0 6px 14px rgba(56, 189, 248, 0.35));
+}
+
+.wrenchy-avatar-btn:active {
+  transform: scale(0.96);
+}
+
+/* Character Body & SVG Part Animations */
+.wrenchy-character {
+  width: 74px;
+  height: 86px;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.6));
+  cursor: pointer;
+}
+
+/* 1. Idle Breathing Animation */
+.wrenchy-body-group {
+  animation: wrenchyBreathe 3.5s ease-in-out infinite;
+  transform-origin: 37px 70px;
+}
+
+@keyframes wrenchyBreathe {
+  0%, 100% { transform: translateY(0px) scale(1, 1); }
+  50% { transform: translateY(-2.5px) scale(1.01, 1.02); }
+}
+
+/* 2. Periodic Waving Hand (~Every 5 Seconds) */
+.wrenchy-right-arm {
+  transform-origin: 52px 42px;
+  animation: wrenchyWave 5s ease-in-out infinite;
+}
+
+@keyframes wrenchyWave {
+  0%, 68%, 100% { transform: rotate(0deg); }
+  74% { transform: rotate(-26deg); }
+  80% { transform: rotate(12deg); }
+  86% { transform: rotate(-22deg); }
+  92% { transform: rotate(6deg); }
+  96% { transform: rotate(0deg); }
+}
+
+/* 3. Speaking / Talking Expression */
+.wrenchy-character.speaking .wrenchy-mouth {
+  animation: wrenchySpeak 0.3s ease-in-out infinite alternate;
+  transform-origin: 37px 46px;
+}
+
+@keyframes wrenchySpeak {
+  0% { transform: scaleY(0.3); }
+  100% { transform: scaleY(1.5); }
+}
+
+.wrenchy-character.speaking .wrenchy-left-arm {
+  animation: wrenchyGesture 0.7s ease-in-out infinite alternate;
+  transform-origin: 22px 42px;
+}
+
+@keyframes wrenchyGesture {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(20deg); }
+}
+
+/* Floating Chat Modal */
+.wrenchy-modal {
+  position: fixed;
+  bottom: 110px;
+  right: 24px;
+  width: 380px;
+  height: 520px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.45);
+  display: flex;
+  flex-direction: column;
+  z-index: 1045;
+  overflow: hidden;
+  animation: pmFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.wrenchy-modal-header {
+  background: var(--bg-sidebar);
+  border-bottom: 1px solid var(--border-subtle);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.wrenchy-messages-box {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.wrenchy-msg {
+  max-width: 85%;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 0.86rem;
+  line-height: 1.45;
+  animation: pmFadeIn 0.2s ease-out;
+}
+
+.wrenchy-msg.user {
+  background: #0284c7;
+  color: #ffffff;
+  align-self: flex-end;
+  border-bottom-right-radius: 2px;
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.3);
+}
+
+.wrenchy-msg.assistant {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  align-self: flex-start;
+  border-bottom-left-radius: 2px;
+  border: 1px solid var(--border-subtle);
+}
+
+.wrenchy-modal-footer {
+  background: var(--bg-sidebar);
+  border-top: 1px solid var(--border-subtle);
+  padding: 12px;
+  display: flex;
+  gap: 8px;
+}
+
+/* Light Theme Overrides */
+[data-theme="light"] .wrenchy-bubble {
+  background: #ffffff !important;
+  color: #1f1e1c !important;
+  border-color: #dcdad4 !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08) !important;
+}
+
+[data-theme="light"] .wrenchy-bubble::after {
+  background: #ffffff !important;
+  border-color: #dcdad4 !important;
+}
+
+[data-theme="light"] .wrenchy-modal {
+  background: #ffffff !important;
+  border-color: #dedcd5 !important;
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.12) !important;
+}
+
+[data-theme="light"] .wrenchy-modal-header,
+[data-theme="light"] .wrenchy-modal-footer {
+  background: #f5f4f0 !important;
+  border-color: #e4e2dc !important;
+}
+
+[data-theme="light"] .wrenchy-msg.assistant {
+  background: #eeece5 !important;
+  color: #1f1e1c !important;
+  border-color: #dedcd5 !important;
+}
+
+[data-theme="light"] .wrenchy-msg.user {
+  background: #0284c7 !important;
+  color: #ffffff !important;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}

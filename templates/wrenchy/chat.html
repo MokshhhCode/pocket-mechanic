@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block title %}Wrenchy AI Assistant — Pocket Mechanic{% endblock %}
+
+{% block content %}
+<div class="pm-page-header">
+  <div class="pm-page-header-content">
+    <div class="pm-page-pretitle">INTELLIGENT CONVERSATION</div>
+    <h1 class="pm-page-title">Wrenchy AI Motorcycle Assistant</h1>
+    <p class="pm-page-desc">
+      Context-aware diagnostic consultation with knowledge of {{ current_bike.mfg_name }} {{ current_bike.model_name }} specifications, maintenance intervals, and telemetry.
+    </p>
+  </div>
+  <div class="pm-page-header-actions">
+    <span class="pm-pill pm-pill-active">
+      <span class="indicator-dot indicator-green"></span>
+      Online Diagnostic Assistant
+    </span>
+  </div>
+</div>
+
+<div class="pm-content-body">
+  <div class="row g-4">
+    <!-- Left Column: Past Consultations -->
+    <div class="col-md-4 col-lg-3">
+      <div class="pm-card h-100 d-flex flex-column" style="min-height: 580px;">
+        <div class="pm-card-header pb-2">
+          <strong class="text-white small">Saved Consultations</strong>
+          <span class="pm-pill pm-pill-neutral">{{ conversations | length }}</span>
+        </div>
+        <div class="list-group list-group-flush bg-transparent flex-grow-1 overflow-auto p-2" style="max-height: 480px;">
+          {% for c in conversations %}
+          <a href="{{ url_for('wrenchy.index', conv_id=c.conversation_id) }}" class="list-group-item bg-transparent border-secondary py-2 px-2 text-decoration-none {% if c.conversation_id == active_conv_id %}bg-elevated text-cyan{% else %}text-light{% endif %}" style="border-radius: 6px;">
+            <div class="small fw-medium text-truncate">{{ c.title }}</div>
+            <div class="text-secondary font-monospace" style="font-size: 0.7rem;">{{ c.last_message_at }}</div>
+          </a>
+          {% endfor %}
+        </div>
+        <div class="p-3 border-top border-secondary text-center">
+          <a href="{{ url_for('wrenchy.index') }}" class="btn btn-sm btn-pm-secondary w-100">
+            + New Consultation
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Center/Right Column: Interactive Chat Interface -->
+    <div class="col-md-8 col-lg-9">
+      <div class="pm-card d-flex flex-column" style="height: 580px;">
+        <div class="pm-card-header pb-2">
+          <div class="d-flex align-items-center gap-2">
+            <img src="{{ url_for('static', filename='images/wrenchy_brand.png') }}" style="width: 22px; height: 22px; object-fit: contain;" alt="Wrenchy">
+            <span class="fw-bold text-white small">Live Session with Wrenchy</span>
+          </div>
+          <span class="text-secondary small font-monospace">Session: {{ active_conv_id }}</span>
+        </div>
+
+        <!-- Chat History Box -->
+        <div class="flex-grow-1 overflow-auto p-3 d-flex flex-column gap-3" id="mainChatBox">
+          {% for msg in history %}
+          <div class="wrenchy-msg {{ 'user' if msg.sender == 'USER' else 'assistant' }}">
+            {{ msg.message_text | replace('\n', '<br>') | safe }}
+          </div>
+          {% endfor %}
+        </div>
+
+        <!-- Input Bar -->
+        <div class="p-3 border-top border-secondary bg-transparent">
+          <div class="input-group">
+            <input type="text" id="fullChatInput" class="pm-input" placeholder="Ask Wrenchy about symptoms, unusual sounds, specs, or maintenance...">
+            <button class="btn btn-pm-primary px-4 ms-2" id="fullChatSendBtn">
+              Send Query &rarr;
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const input = document.getElementById("fullChatInput");
+  const sendBtn = document.getElementById("fullChatSendBtn");
+  const box = document.getElementById("mainChatBox");
+  const convId = "{{ active_conv_id }}";
+
+  // Scroll to bottom
+  if (box) box.scrollTop = box.scrollHeight;
+
+  function send() {
+    const text = input.value.trim();
+    if (!text) return;
+
+    append(text, "user");
+    input.value = "";
+
+    fetch("/api/wrenchy/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: text, conversation_id: convId })
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.reply) {
+        append(data.reply, "assistant", data.suggested_action);
+      }
+    })
+    .catch(err => {
+      append("Communication error.", "assistant");
+    });
+  }
+
+  function append(text, sender, action) {
+    const div = document.createElement("div");
+    div.className = `wrenchy-msg ${sender}`;
+    let formatted = text.replace(/\n/g, "<br>").replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+    div.innerHTML = formatted;
+
+    if (action && action.action === "NAVIGATE_TO_DIAGNOSTICS") {
+      const btn = document.createElement("a");
+      btn.href = "/diagnostics";
+      btn.className = "btn btn-sm btn-pm-primary mt-2 d-inline-block text-white";
+      btn.innerText = action.label || "Start Diagnostics";
+      div.appendChild(document.createElement("br"));
+      div.appendChild(btn);
+    }
+
+    box.appendChild(div);
+    box.scrollTop = box.scrollHeight;
+  }
+
+  sendBtn.addEventListener("click", send);
+  input.addEventListener("keydown", function(e) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      send();
+    }
+  });
+});
+</script>
+{% endblock %}

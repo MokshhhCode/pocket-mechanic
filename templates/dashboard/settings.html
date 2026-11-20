@@ -1,0 +1,309 @@
+{% extends "base.html" %}
+
+{% block title %}Settings & Local Data — Pocket Mechanic{% endblock %}
+
+{% block content %}
+<div class="pm-page-header">
+  <div class="pm-page-header-content">
+    <div class="pm-page-pretitle">SYSTEM & DATA</div>
+    <h1 class="pm-page-title">Settings & Local Data Management</h1>
+    <p class="pm-page-desc">
+      Manage local rider profiles, monitor your offline MySQL database, export complete JSON data backups, and configure diagnostic preferences.
+    </p>
+  </div>
+  <div class="pm-page-header-actions">
+    <a href="{{ url_for('dashboard.export_data') }}" class="btn btn-pm-primary">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+        <polyline points="7 10 12 15 17 10"></polyline>
+        <line x1="12" y1="15" x2="12" y2="3"></line>
+      </svg>
+      Export JSON Backup
+    </a>
+  </div>
+</div>
+
+<div class="pm-content-body">
+
+  <div class="row g-4">
+    <!-- Left Column: Rider Profile & Local DB Status -->
+    <div class="col-lg-7">
+
+      <!-- Rider Profile Card -->
+      <div class="pm-card mb-4">
+        <div class="pm-card-header">
+          <div class="d-flex align-items-center gap-2">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            <span class="pm-card-title">Active Rider Profile</span>
+          </div>
+          <span class="pm-pill pm-pill-active">Local Desktop Mode</span>
+        </div>
+
+        <div class="p-3">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <span class="pm-spec-label">Full Name</span>
+              <div class="fw-semibold text-white fs-6">{{ current_user.full_name }}</div>
+            </div>
+            <div class="col-md-6">
+              <span class="pm-spec-label">Contact / Account Email</span>
+              <div class="font-monospace text-light small">{{ current_user.email }}</div>
+            </div>
+            <div class="col-md-6">
+              <span class="pm-spec-label">Location</span>
+              <div class="text-white small">{{ current_user.city }}, {{ current_user.state }}</div>
+            </div>
+            <div class="col-md-6">
+              <span class="pm-spec-label">Driving Licence (Encrypted at Rest)</span>
+              <div class="d-flex align-items-center gap-2">
+                <span class="font-monospace text-light small">{{ current_user.masked_licence }}</span>
+                <span class="pm-pill pm-pill-neutral" style="font-size: 0.65rem;">AES-Fernet 256</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Switch Local Rider Profiles -->
+          <div class="mt-4 pt-3 border-top border-secondary">
+            <div class="pm-section-label mb-2">SWITCH LOCAL RIDER PROFILE</div>
+            <div class="list-group list-group-flush bg-transparent">
+              {% for u in all_users %}
+              <div class="list-group-item bg-transparent border-secondary py-2 px-0 d-flex justify-content-between align-items-center">
+                <div>
+                  <strong class="text-white small">{{ u.full_name }}</strong>
+                  <span class="text-secondary small ms-2">({{ u.email }}) • {{ u.bike_count }} bike(s)</span>
+                </div>
+                {% if u.user_id == current_user.id %}
+                <span class="pm-pill pm-pill-active">Current Rider</span>
+                {% else %}
+                <button class="btn btn-sm btn-pm-secondary py-1 px-2 switch-rider-btn" data-user-id="{{ u.user_id }}">
+                  Switch
+                </button>
+                {% endif %}
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Local MySQL Database Health & Statistics -->
+      <div class="pm-card">
+        <div class="pm-card-header">
+          <div class="d-flex align-items-center gap-2">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
+              <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path>
+              <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path>
+            </svg>
+            <span class="pm-card-title">Offline MySQL Storage Diagnostics</span>
+          </div>
+          <span class="pm-pill pm-pill-active">127.0.0.1:3306 Connected</span>
+        </div>
+
+        <div class="p-3">
+          <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-secondary">
+            <span class="text-secondary small">Database Schema</span>
+            <span class="font-monospace text-white small">pocket_mechanic_db</span>
+          </div>
+          <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-secondary">
+            <span class="text-secondary small">Total Tables in Schema</span>
+            <span class="font-monospace text-white small">28 Normalized Tables</span>
+          </div>
+          <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-secondary">
+            <span class="text-secondary small">Total Seeded & Stored Rows</span>
+            <span class="font-monospace text-success small">{{ total_records }} Records</span>
+          </div>
+          <div class="d-flex justify-content-between align-items-center py-2">
+            <span class="text-secondary small">Cloud Dependency</span>
+            <span class="pm-pill pm-pill-neutral">0% (Pure Offline Local)</span>
+          </div>
+
+          <!-- Table Breakdown Accordion / Summary -->
+          <div class="mt-3">
+            <button class="btn btn-sm btn-pm-secondary w-100" type="button" data-bs-toggle="collapse" data-bs-target="#tableBreakdown">
+              Show All 28 Table Record Counts &darr;
+            </button>
+            <div class="collapse mt-2" id="tableBreakdown">
+              <div class="table-responsive" style="max-height: 240px; overflow-y: auto;">
+                <table class="pm-table small">
+                  <thead>
+                    <tr>
+                      <th>Table Name</th>
+                      <th class="text-end">Record Count</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for t in db_tables %}
+                    <tr>
+                      <td class="font-monospace text-light">{{ t.table_name }}</td>
+                      <td class="text-end font-monospace text-secondary">{{ t.table_rows or 0 }}</td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Right Column: Runtime Preferences, Export, and About -->
+    <div class="col-lg-5">
+
+      <!-- Diagnostic Runtime Preferences -->
+      <div class="pm-card mb-4">
+        <div class="pm-card-header">
+          <div class="d-flex align-items-center gap-2">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+            <span class="pm-card-title">Diagnostic Runtime Controls</span>
+          </div>
+        </div>
+
+        <div class="p-3">
+          <div class="mb-3">
+            <label class="pm-form-label">Data Source Mode</label>
+            <select class="pm-input" id="settingDataSource">
+              <option value="SIMULATOR" {% if user_settings.DATA_SOURCE_MODE == 'SIMULATOR' %}selected{% endif %}>Stage 1: Simulated Sensor Telemetry</option>
+              <option value="HARDWARE" {% if user_settings.DATA_SOURCE_MODE == 'HARDWARE' %}selected{% endif %}>Stage 2: Hardware ESP32 Microcontroller</option>
+            </select>
+            <div class="text-secondary small mt-1">Controls whether diagnostics read from simulated physics or USB/MQTT bus.</div>
+          </div>
+
+          <div class="mb-3">
+            <label class="pm-form-label">Simulation Intensity</label>
+            <select class="pm-input" id="settingSimIntensity">
+              <option value="REGULAR" {% if user_settings.SIMULATION_INTENSITY == 'REGULAR' %}selected{% endif %}>Regular (Nominal riding conditions)</option>
+              <option value="MEDIUM" {% if user_settings.SIMULATION_INTENSITY == 'MEDIUM' %}selected{% endif %}>Medium (High stress / stop-and-go traffic)</option>
+              <option value="INTENSE" {% if user_settings.SIMULATION_INTENSITY == 'INTENSE' %}selected{% endif %}>Intense (Simulated component fault state)</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="pm-form-label">Visual Theme</label>
+            <select class="pm-input" id="settingTheme">
+              <option value="DARK" {% if user_settings.THEME_MODE == 'DARK' %}selected{% endif %}>Dark Mode (Default Notion Obsidian)</option>
+              <option value="LIGHT" {% if user_settings.THEME_MODE == 'LIGHT' %}selected{% endif %}>Light Mode (Calm Minimalist)</option>
+            </select>
+          </div>
+
+          <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="settingLiveMl" {% if user_settings.LIVE_ML_DIAGNOSTICS == 'ON' %}checked{% endif %}>
+            <label class="form-check-label text-secondary small" for="settingLiveMl">
+              Run background ML inference during telemetry streams
+            </label>
+          </div>
+
+          <button class="btn btn-pm-primary w-100 btn-sm" id="saveRuntimeSettingsBtn">
+            Save Preferences
+          </button>
+          <div class="text-success small mt-2 text-center" id="runtimeSaveSuccess" style="display: none;">
+            Preferences saved to local MySQL.
+          </div>
+        </div>
+      </div>
+
+      <!-- About Application -->
+      <div class="pm-card">
+        <div class="pm-card-header">
+          <span class="pm-card-title">About Pocket Mechanic</span>
+          <span class="pm-pill pm-pill-neutral">v1.0.0 Desktop</span>
+        </div>
+        <div class="p-3 text-center">
+          <img src="{{ url_for('static', filename='images/wrenchy_avatar.png') }}" alt="Wrenchy" style="width: 72px; height: 72px; object-fit: contain; margin-bottom: 12px;">
+          <h4 class="fw-bold text-white mb-1">Pocket Mechanic</h4>
+          <p class="text-secondary small mb-3">
+            Intelligent Motorcycle Health Monitoring & Predictive Maintenance System
+          </p>
+
+          <div class="text-start pm-specs-grid small mb-3">
+            <div class="pm-spec-row py-1">
+              <span class="pm-spec-label">Platform</span>
+              <span class="text-light">macOS Desktop Application</span>
+            </div>
+            <div class="pm-spec-row py-1">
+              <span class="pm-spec-label">Native Runtime</span>
+              <span class="text-light">PyObjC / WebKit Cocoa</span>
+            </div>
+            <div class="pm-spec-row py-1">
+              <span class="pm-spec-label">ML Core</span>
+              <span class="text-light">Scikit-learn Ensembles & RUL</span>
+            </div>
+            <div class="pm-spec-row py-1">
+              <span class="pm-spec-label">Database</span>
+              <span class="text-light">Offline Local MySQL 9.5</span>
+            </div>
+            <div class="pm-spec-row py-1">
+              <span class="pm-spec-label">OEM Database</span>
+              <span class="text-light">28 Verified Manufacturers</span>
+            </div>
+          </div>
+
+          <div class="text-muted small border-top border-secondary pt-2">
+            Engineered for motorcycle owners and certified technicians.
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // Switch Rider Profile
+  document.querySelectorAll('.switch-rider-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const uid = btn.dataset.userId;
+      try {
+        const res = await fetch(`/api/profile/switch/${uid}`, { method: 'POST' });
+        const data = await res.json();
+        if (data.success) {
+          window.location.reload();
+        } else {
+          alert(data.error || 'Failed to switch rider profile.');
+        }
+      } catch (e) {
+        alert('Communication error switching profile.');
+      }
+    });
+  });
+
+  // Save Runtime Settings
+  const saveRuntimeBtn = document.getElementById('saveRuntimeSettingsBtn');
+  if (saveRuntimeBtn) {
+    saveRuntimeBtn.addEventListener('click', async () => {
+      const srcMode = document.getElementById('settingDataSource').value;
+      const simInt = document.getElementById('settingSimIntensity').value;
+      const theme = document.getElementById('settingTheme').value;
+      const liveMl = document.getElementById('settingLiveMl').checked ? 'ON' : 'OFF';
+
+      try {
+        await Promise.all([
+          fetch('/api/settings/update', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: 'DATA_SOURCE_MODE', value: srcMode }) }),
+          fetch('/api/settings/update', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: 'SIMULATION_INTENSITY', value: simInt }) }),
+          fetch('/api/settings/update', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: 'THEME_MODE', value: theme }) }),
+          fetch('/api/settings/update', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: 'LIVE_ML_DIAGNOSTICS', value: liveMl }) })
+        ]);
+
+        document.documentElement.setAttribute('data-theme', theme.toLowerCase());
+        document.documentElement.setAttribute('data-bs-theme', theme.toLowerCase());
+        const ok = document.getElementById('runtimeSaveSuccess');
+        ok.style.display = 'block';
+        setTimeout(() => { ok.style.display = 'none'; }, 3000);
+      } catch (e) {
+        alert('Failed to save settings to MySQL.');
+      }
+    });
+  }
+});
+</script>
+{% endblock %}

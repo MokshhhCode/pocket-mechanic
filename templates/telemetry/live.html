@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}Live Telemetry — Pocket Mechanic{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+
+  <!-- Header -->
+  <div class="d-flex flex-wrap align-items-center justify-content-between mb-4 gap-3">
+    <div>
+      <h1 class="h3 fw-bold text-white mb-1">Live Sensor Telemetry Monitor</h1>
+      <p class="text-secondary small mb-0">
+        Continuous Stream Ingestion • Dynamic Tolerance Verification • Stage 1 Simulated Data Source
+      </p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <span class="badge {% if source_mode == 'SIMULATOR' %}bg-primary{% else %}bg-secondary{% endif %} font-monospace">
+        Source: {{ source_mode }} ({{ intensity }})
+      </span>
+      <span class="badge bg-secondary font-monospace" id="telemetryOverallStatus">
+        {{ telemetry.status }}
+      </span>
+    </div>
+  </div>
+
+  <!-- Hardware Disconnected Banner (Shown only when in Hardware Mode without ESP32) -->
+  <div class="alert alert-warning bg-card border-warning text-warning small py-3 mb-4" id="telemetryOfflineBanner" style="display: none;">
+    Hardware sensor unit not detected on USB serial or MQTT bus. Connect ESP32 to receive live telemetry.
+  </div>
+
+  <!-- Telemetry Sensor Cards Grid -->
+  <div class="row g-3" id="telemetryGrid">
+    {% for s in sensors %}
+    <div class="col-sm-6 col-lg-4 col-xl-3">
+      <div class="pm-card h-100 d-flex flex-column justify-content-between p-3" data-sensor-code="{{ s.sensor_code }}">
+        <div>
+          <!-- Card Header -->
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="text-secondary small fw-medium text-truncate" title="{{ s.name }}">{{ s.name }}</span>
+            <div class="d-flex align-items-center gap-1">
+              <span class="indicator-dot indicator-green"></span>
+              <span class="badge badge-green sensor-health-badge" style="font-size: 0.65rem;">Nominal</span>
+            </div>
+          </div>
+
+          <!-- Main Value -->
+          <div class="d-flex align-items-baseline gap-2 my-2">
+            <span class="display-6 fw-bold text-white sensor-value font-monospace">
+              {{ telemetry.readings.get(s.sensor_code, '--') if telemetry.readings else '--' }}
+            </span>
+            <span class="text-secondary fs-6">{{ s.unit }}</span>
+          </div>
+
+          <!-- Tolerances -->
+          <div class="text-secondary small" style="font-size: 0.72rem;">
+            Normal Range: {{ s.min_normal }} – {{ s.max_normal }} {{ s.unit }}
+          </div>
+        </div>
+
+        <!-- Footer Actions & Expand Info -->
+        <div class="pt-3 border-top border-secondary mt-3 d-flex justify-content-between align-items-center">
+          <a href="{{ url_for('diagnostics.index', component=s.sensor_code) }}" class="btn btn-sm btn-pm-secondary py-1 px-2" style="font-size: 0.75rem;">
+            Diagnose
+          </a>
+          <button class="btn btn-sm btn-link text-cyan text-decoration-none p-0" style="font-size: 0.75rem;" onclick="askWrenchyAboutSensor('{{ s.name }}', '{{ s.sensor_code }}')">
+            Ask Wrenchy &rarr;
+          </button>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/telemetry.js') }}"></script>
+<script>
+function askWrenchyAboutSensor(sensorName, sensorCode) {
+  if (window.wrenchy) {
+    window.wrenchy.toggleModal(true);
+    window.wrenchy.input.value = `Can you evaluate the current reading and operating status of my ${sensorName}?`;
+    window.wrenchy.sendMessage();
+  }
+}
+</script>
+{% endblock %}

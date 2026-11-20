@@ -1,0 +1,140 @@
+{
+  "trained_at": "2026-11-20 20:28:19",
+  "feature_names": [
+    "odometer_km",
+    "engine_hours",
+    "ambient_temp",
+    "vehicle_speed",
+    "engine_rpm",
+    "engine_temp",
+    "battery_voltage",
+    "vibration_level",
+    "tyre_pressure_front",
+    "tyre_pressure_rear",
+    "brake_pad_thickness",
+    "oil_quality_index",
+    "chain_slack_mm",
+    "fuel_rate"
+  ],
+  "best_classifier": "Random_Forest",
+  "best_f1": 1.0,
+  "results": {
+    "Random_Forest": {
+      "accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1_score": 1.0,
+      "roc_auc": 1.0,
+      "duration_sec": 0.41,
+      "feature_importance": {
+        "odometer_km": 0.003773926929937002,
+        "engine_hours": 0.003750957750295837,
+        "ambient_temp": 0.0028587281588343515,
+        "vehicle_speed": 0.004546233852122295,
+        "engine_rpm": 0.004103131511304721,
+        "engine_temp": 0.10190931097707268,
+        "battery_voltage": 0.19096745285841588,
+        "vibration_level": 0.17507811235507043,
+        "tyre_pressure_front": 0.0025382386613011527,
+        "tyre_pressure_rear": 0.0024671838265818576,
+        "brake_pad_thickness": 0.21313446003158387,
+        "oil_quality_index": 0.12317215080380713,
+        "chain_slack_mm": 0.14577983688783966,
+        "fuel_rate": 0.02592027539583326
+      }
+    },
+    "Decision_Tree": {
+      "accuracy": 0.9991666666666666,
+      "precision": 0.9991705069124425,
+      "recall": 0.9991666666666666,
+      "f1_score": 0.9991673393924123,
+      "roc_auc": 0.9994918699186993,
+      "duration_sec": 0.02,
+      "feature_importance": {
+        "odometer_km": 0.0,
+        "engine_hours": 0.0,
+        "ambient_temp": 0.0,
+        "vehicle_speed": 0.0,
+        "engine_rpm": 0.0,
+        "engine_temp": 0.004458284502970408,
+        "battery_voltage": 0.17295791841563707,
+        "vibration_level": 0.20464859783368625,
+        "tyre_pressure_front": 0.0,
+        "tyre_pressure_rear": 0.0,
+        "brake_pad_thickness": 0.21275981243694828,
+        "oil_quality_index": 0.20732039344392125,
+        "chain_slack_mm": 0.19711013993164708,
+        "fuel_rate": 0.0007448534351895469
+      }
+    },
+    "Support_Vector_Machine": {
+      "accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1_score": 1.0,
+      "roc_auc": 1.0,
+      "duration_sec": 0.24,
+      "feature_importance": null
+    },
+    "Logistic_Regression": {
+      "accuracy": 0.9908333333333333,
+      "precision": 0.9908320927433404,
+      "recall": 0.9908333333333333,
+      "f1_score": 0.9908260525098193,
+      "roc_auc": 0.9996671335383225,
+      "duration_sec": 0.02,
+      "feature_importance": null
+    },
+    "K_Nearest_Neighbors": {
+      "accuracy": 0.9991666666666666,
+      "precision": 0.9991678224687933,
+      "recall": 0.9991666666666666,
+      "f1_score": 0.9991661651788829,
+      "roc_auc": 0.9999973735754986,
+      "duration_sec": 0.0,
+      "feature_importance": null
+    },
+    "Naive_Bayes": {
+      "accuracy": 0.9866666666666667,
+      "precision": 0.987010516562258,
+      "recall": 0.9866666666666667,
+      "f1_score": 0.9866974361554414,
+      "roc_auc": 0.9998333756775067,
+      "duration_sec": 0.0,
+      "feature_importance": null
+    },
+    "Gradient_Boosting": {
+      "accuracy": 0.9991666666666666,
+      "precision": 0.9991705069124425,
+      "recall": 0.9991666666666666,
+      "f1_score": 0.9991673393924123,
+      "roc_auc": 1.0,
+      "duration_sec": 2.52,
+      "feature_importance": {
+        "odometer_km": 3.8731463686020894e-16,
+        "engine_hours": 1.3402123853635755e-10,
+        "ambient_temp": 0.000190122331352876,
+        "vehicle_speed": 4.6465750917851097e-07,
+        "engine_rpm": 2.5212266226513425e-05,
+        "engine_temp": 0.005336884893593154,
+        "battery_voltage": 0.1875600023593356,
+        "vibration_level": 0.18671770935484241,
+        "tyre_pressure_front": 5.221354678994533e-10,
+        "tyre_pressure_rear": 1.146134614617985e-10,
+        "brake_pad_thickness": 0.22558408730356327,
+        "oil_quality_index": 0.22451972000946455,
+        "chain_slack_mm": 0.16908124626646673,
+        "fuel_rate": 0.00098454978687519
+      }
+    }
+  },
+  "pca_explained_variance": [
+    0.25756786654239316,
+    0.14153376756598346
+  ],
+  "rul_metrics": {
+    "mae": 109.69383179889746,
+    "rmse": 143.78646640231398,
+    "r2": 0.9982382276258053
+  }
+}

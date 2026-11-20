@@ -1,0 +1,307 @@
+{% extends "base.html" %}
+
+{% block title %}Overview — Pocket Mechanic{% endblock %}
+
+{% block content %}
+<div class="pm-page-header">
+  <div class="pm-page-header-content">
+    <div class="pm-page-pretitle">SYSTEM OVERVIEW</div>
+    <h1 class="pm-page-title">Welcome back, {{ current_user.full_name }}</h1>
+    <p class="pm-page-desc">
+      Monitoring {{ current_bike.mfg_name }} {{ current_bike.model_name if current_bike.model_name else (current_bike.custom_make ~ ' ' ~ current_bike.custom_model) }}
+      • Registration: <span class="font-monospace text-light">{{ current_bike.registration_number }}</span>
+      • Odometer: <span class="text-light">{{ current_bike.current_odometer_km }} km</span>
+    </p>
+  </div>
+  <div class="pm-page-header-actions">
+    <a href="{{ url_for('diagnostics.index') }}" class="btn btn-pm-primary">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="16" x2="12" y2="12"></line>
+        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+      </svg>
+      Run Diagnostic Scan
+    </a>
+    <a href="{{ url_for('telemetry.index') }}" class="btn btn-pm-secondary">
+      Live Telemetry &rarr;
+    </a>
+  </div>
+</div>
+
+<div class="pm-content-body">
+
+  <!-- ====================================================================== -->
+  <!-- URGENT WORK PANEL (Most important current issue)                       -->
+  <!-- ====================================================================== -->
+  <div class="urgent-panel {% if urgent_work.status_color == 'red' %}critical{% elif urgent_work.status_color == 'yellow' %}warning{% else %}normal{% endif %}">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+      <div class="d-flex align-items-center gap-3">
+        <span class="indicator-dot {% if urgent_work.status_color == 'red' %}indicator-red{% elif urgent_work.status_color == 'yellow' %}indicator-yellow{% else %}indicator-green{% endif %}"></span>
+        <div>
+          <div class="d-flex align-items-center gap-2">
+            <span class="badge {% if urgent_work.status_color == 'red' %}badge-red{% elif urgent_work.status_color == 'yellow' %}badge-yellow{% else %}badge-green{% endif %} text-uppercase" style="font-size: 0.7rem;">
+              {{ urgent_work.overall_priority }} PRIORITY
+            </span>
+            <strong class="text-white fs-6">{{ urgent_work.urgent_summary }}</strong>
+          </div>
+          <div class="text-secondary small mt-1">
+            <strong>Action:</strong> {{ urgent_work.recommended_action }}
+          </div>
+        </div>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <button class="btn btn-sm btn-pm-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#urgentMoreInfo">
+          More Information
+        </button>
+        <a href="{{ url_for('diagnostics.index', symptom=urgent_work.urgent_summary) }}" class="btn btn-sm btn-pm-primary">
+          Diagnose Now &rarr;
+        </a>
+      </div>
+    </div>
+
+    <!-- Collapsed More Information Section -->
+    <div class="collapse mt-3 pt-3 border-top border-secondary" id="urgentMoreInfo">
+      <div class="row g-3 small">
+        <div class="col-md-7">
+          <div class="text-secondary mb-1"><strong>Detailed Mechanical Reasoning:</strong></div>
+          <p class="text-light mb-2">{{ urgent_work.supporting_reason }}</p>
+          <div class="text-secondary">
+            <strong>ML Inference:</strong> {{ urgent_work.ml_model_used }} • Confidence: {{ urgent_work.ml_confidence_pct }}%
+            {% if urgent_work.estimated_pad_rul_km %} • Estimated Remaining Pad Life: {{ urgent_work.estimated_pad_rul_km }} km{% endif %}
+          </div>
+        </div>
+        <div class="col-md-5">
+          <div class="text-secondary mb-1"><strong>Relevant Telemetry Readings:</strong></div>
+          <ul class="list-unstyled text-light font-monospace m-0">
+            <li>Engine Temp: {{ telemetry.readings.ENG_TEMP if telemetry.readings else 88.0 }} °C</li>
+            <li>Brake Friction: {{ telemetry.readings.BRAKE_PAD_WEAR if telemetry.readings else 4.5 }} mm</li>
+            <li>Battery Voltage: {{ telemetry.readings.BAT_VOLT if telemetry.readings else 14.1 }} V</li>
+            <li>RMS Vibration: {{ telemetry.readings.VIB_LEVEL if telemetry.readings else 2.8 }} mm/s</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====================================================================== -->
+  <!-- MAIN GARAGE SECTION (Left: Bike Visual, Right: Collapsible Panels)      -->
+  <!-- ====================================================================== -->
+  <div class="row g-4">
+    <!-- Left: Motorcycle Visual Presentation & Garage -->
+    <div class="col-lg-7">
+      <div class="pm-card pm-stage-card h-100 d-flex flex-column justify-content-between p-4 position-relative overflow-hidden">
+        
+        <!-- Top Vehicle Badge & Logo -->
+        <div class="d-flex justify-content-between align-items-center z-1">
+          <div>
+            <span class="text-secondary small text-uppercase fw-semibold">{{ current_bike.mfg_name }}</span>
+            <h2 class="h4 text-white fw-bold mb-0">
+              {{ current_bike.model_name if current_bike.model_name else (current_bike.custom_make ~ ' ' ~ current_bike.custom_model) }}
+            </h2>
+          </div>
+          <div class="text-end">
+            <span class="badge bg-secondary font-monospace">{{ current_bike.manufacturing_year }}</span>
+            <span class="badge bg-dark border border-secondary text-light ms-1">{{ current_bike.colour }}</span>
+          </div>
+        </div>
+
+        <!-- Center Motorcycle Visual Graphic (Automotive Silhouette Representation) -->
+        <div class="my-auto text-center py-4 z-1">
+          <!-- Stylized Motorcycle Visual with Dynamic LED Glow -->
+          <div class="position-relative d-inline-block">
+            <svg width="420" height="220" viewBox="0 0 600 320" xmlns="http://www.w3.org/2000/svg" class="img-fluid" style="filter: drop-shadow(0 15px 30px rgba(0, 0, 0, 0.8));">
+              <defs>
+                <linearGradient id="chassisGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#475569" />
+                  <stop offset="100%" stop-color="#1e293b" />
+                </linearGradient>
+                <linearGradient id="accentPaint" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#38bdf8" />
+                  <stop offset="100%" stop-color="#0284c7" />
+                </linearGradient>
+              </defs>
+
+              <!-- Wheels -->
+              <!-- Front Wheel -->
+              <circle cx="480" cy="220" r="70" fill="none" stroke="#334155" stroke-width="14" />
+              <circle cx="480" cy="220" r="50" fill="none" stroke="#64748b" stroke-width="3" />
+              <circle cx="480" cy="220" r="28" fill="#1e293b" stroke="#0ea5e9" stroke-width="2" />
+              <!-- Rear Wheel -->
+              <circle cx="120" cy="220" r="70" fill="none" stroke="#334155" stroke-width="16" />
+              <circle cx="120" cy="220" r="50" fill="none" stroke="#64748b" stroke-width="3" />
+              <circle cx="120" cy="220" r="28" fill="#1e293b" stroke="#0ea5e9" stroke-width="2" />
+
+              <!-- Swingarm & Drive Chain / Shaft -->
+              <line x1="120" y1="220" x2="270" y2="190" stroke="#64748b" stroke-width="12" stroke-linecap="round" />
+              <!-- Front Fork -->
+              <line x1="480" y1="220" x2="410" y2="80" stroke="#94a3b8" stroke-width="10" stroke-linecap="round" />
+              <!-- Handlebar -->
+              <line x1="410" y1="80" x2="390" y2="60" stroke="#cbd5e1" stroke-width="6" stroke-linecap="round" />
+
+              <!-- Main Frame & Engine Block -->
+              <polygon points="230,195 350,195 380,130 260,130" fill="url(#chassisGrad)" stroke="#64748b" stroke-width="2" />
+              <!-- Engine Fins / Crankcase -->
+              <rect x="250" y="150" width="75" height="50" rx="6" fill="#0f172a" stroke="#475569" stroke-width="2" />
+              <line x1="255" y1="160" x2="315" y2="160" stroke="#64748b" stroke-width="2" />
+              <line x1="255" y1="170" x2="315" y2="170" stroke="#64748b" stroke-width="2" />
+              <line x1="255" y1="180" x2="315" y2="180" stroke="#64748b" stroke-width="2" />
+
+              <!-- Fuel Tank & Seat (Painted Bodywork) -->
+              <path d="M 270 120 C 310 90 380 90 410 120 C 380 135 300 135 270 120 Z" fill="url(#accentPaint)" />
+              <path d="M 170 130 C 210 130 260 130 280 145 L 210 155 Z" fill="#0f172a" stroke="#334155" stroke-width="2" />
+              <!-- Headlight Glow -->
+              <polygon points="425,95 440,90 435,110" fill="#f8fafc" />
+              <circle cx="435" cy="100" r="10" fill="#38bdf8" opacity="0.4" />
+              <!-- Exhaust Pipe -->
+              <path d="M 310 195 Q 360 230 400 230 Q 240 235 150 215" fill="none" stroke="#cbd5e1" stroke-width="7" stroke-linecap="round" />
+            </svg>
+            <div class="mt-2 text-secondary small fst-italic">
+              Diagnostic silhouette configured for {{ current_bike.mfg_name }} chassis geometry
+            </div>
+          </div>
+        </div>
+
+        <!-- Garage Platform Base Glow -->
+        <div class="d-flex justify-content-between align-items-center pt-3 border-top border-secondary text-secondary small z-1">
+          <div>
+            <span class="text-cyan fw-bold">Live Sensor Stream:</span>
+            <span class="badge {% if dev_settings.DATA_SOURCE_MODE == 'SIMULATOR' %}bg-primary{% else %}bg-secondary{% endif %} ms-1">
+              {{ dev_settings.DATA_SOURCE_MODE }}
+            </span>
+          </div>
+          <div>
+            <span>Engine Architecture: </span>
+            <strong class="text-white">{{ current_bike.cooling_type }}-cooled, {{ current_bike.final_drive_type }} Drive</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Collapsible Maintenance & Specs Panel -->
+    <div class="col-lg-5">
+      <div class="pm-card h-100 d-flex flex-column">
+        <div class="pm-card-header pb-2 border-bottom border-secondary">
+          <div class="pm-card-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+            <span>Motorcycle Health Status</span>
+          </div>
+          <span class="badge badge-green">Monitored</span>
+        </div>
+
+        <div class="flex-grow-1 overflow-auto pe-1" style="max-height: 520px;">
+          <!-- 1. Technical Information (Collapsed by Default) -->
+          <div class="border border-secondary rounded p-2 mb-3 bg-elevated">
+            <div class="d-flex justify-content-between align-items-center cursor-pointer" data-bs-toggle="collapse" data-bs-target="#specsCollapse" style="cursor: pointer;">
+              <strong class="text-white small">Technical Specifications</strong>
+              <span class="text-secondary small">&darr; Expand Specs</span>
+            </div>
+            <div class="collapse mt-2 pt-2 border-top border-secondary small" id="specsCollapse">
+              <div class="row g-2">
+                <div class="col-6 text-secondary">Displacement:</div>
+                <div class="col-6 text-white font-monospace text-end">{{ current_bike.displacement_cc }} cc</div>
+
+                <div class="col-6 text-secondary">Max Power:</div>
+                <div class="col-6 text-white font-monospace text-end">{{ current_bike.max_power_bhp }} bhp @ {{ current_bike.max_power_rpm }} rpm</div>
+
+                <div class="col-6 text-secondary">Max Torque:</div>
+                <div class="col-6 text-white font-monospace text-end">{{ current_bike.max_torque_nm }} Nm @ {{ current_bike.max_torque_rpm }} rpm</div>
+
+                <div class="col-6 text-secondary">Transmission:</div>
+                <div class="col-6 text-white font-monospace text-end">{{ current_bike.num_gears }}-Speed ({{ current_bike.final_drive_type }})</div>
+
+                <div class="col-6 text-secondary">Braking Config:</div>
+                <div class="col-6 text-white font-monospace text-end">{{ current_bike.brake_type }}</div>
+
+                <div class="col-6 text-secondary">Recommended Oil:</div>
+                <div class="col-6 text-white font-monospace text-end">{{ current_bike.oil_grade }}</div>
+
+                <div class="col-6 text-secondary">Tyre Spec:</div>
+                <div class="col-6 text-white font-monospace text-end">F: {{ current_bike.front_tyre_psi }} / R: {{ current_bike.rear_tyre_psi }} PSI</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. Maintenance Condition Group A: Before Every Ride (Open by Default) -->
+          <div class="mb-3">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <strong class="text-white small text-uppercase" style="letter-spacing: 0.5px;">A. Before Every Ride</strong>
+              <span class="badge bg-secondary text-light small">{{ group_a_ride | length }} Items</span>
+            </div>
+            <div class="list-group list-group-flush bg-transparent">
+              {% for comp in group_a_ride %}
+              <div class="list-group-item bg-card border-secondary py-2 px-3 d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-2">
+                  <span class="indicator-dot indicator-{{ comp.status_color }}"></span>
+                  <span class="text-light small">{{ comp.display_name_override or comp.base_name }}</span>
+                </div>
+                <a href="{{ url_for('diagnostics.index', component=comp.component_code) }}" class="text-secondary small text-decoration-none">
+                  Inspect &rarr;
+                </a>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+
+          <!-- 3. Maintenance Condition Group B: Weekly / Every 500-1000 km (Collapsed by Default) -->
+          <div class="border border-secondary rounded p-2 mb-3 bg-card">
+            <div class="d-flex justify-content-between align-items-center" data-bs-toggle="collapse" data-bs-target="#weeklyCollapse" style="cursor: pointer;">
+              <strong class="text-white small text-uppercase">B. Weekly / 500–1,000 km</strong>
+              <span class="badge bg-secondary text-secondary small">&darr; {{ group_b_weekly | length }} Items</span>
+            </div>
+            <div class="collapse mt-2 pt-2 border-top border-secondary" id="weeklyCollapse">
+              <div class="list-group list-group-flush bg-transparent">
+                {% for comp in group_b_weekly %}
+                <div class="list-group-item bg-transparent border-secondary py-2 px-2 d-flex align-items-center justify-content-between">
+                  <div class="d-flex align-items-center gap-2">
+                    <span class="indicator-dot indicator-{{ comp.status_color }}"></span>
+                    <span class="text-light small">{{ comp.display_name_override or comp.base_name }}</span>
+                  </div>
+                  <a href="{{ url_for('diagnostics.index', component=comp.component_code) }}" class="text-secondary small text-decoration-none">
+                    Diagnose
+                  </a>
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+
+          <!-- 4. Maintenance Condition Group C: Periodic / Annual (Collapsed by Default) -->
+          <div class="border border-secondary rounded p-2 mb-2 bg-card">
+            <div class="d-flex justify-content-between align-items-center" data-bs-toggle="collapse" data-bs-target="#periodicCollapse" style="cursor: pointer;">
+              <strong class="text-white small text-uppercase">C. Periodic / Annual</strong>
+              <span class="badge bg-secondary text-secondary small">&darr; {{ group_c_periodic | length }} Items</span>
+            </div>
+            <div class="collapse mt-2 pt-2 border-top border-secondary" id="periodicCollapse">
+              <div class="list-group list-group-flush bg-transparent">
+                {% for comp in group_c_periodic %}
+                <div class="list-group-item bg-transparent border-secondary py-2 px-2 d-flex align-items-center justify-content-between">
+                  <div class="d-flex align-items-center gap-2">
+                    <span class="indicator-dot indicator-{{ comp.status_color }}"></span>
+                    <span class="text-light small">{{ comp.display_name_override or comp.base_name }}</span>
+                  </div>
+                  <a href="{{ url_for('diagnostics.index', component=comp.component_code) }}" class="text-secondary small text-decoration-none">
+                    Diagnose
+                  </a>
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="pt-3 border-top border-secondary text-center">
+          <a href="{{ url_for('diagnostics.index') }}" class="btn btn-sm btn-pm-primary w-100 py-2">
+            Open Complete Diagnostics Suite &rarr;
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

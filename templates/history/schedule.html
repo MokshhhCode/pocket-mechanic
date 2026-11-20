@@ -1,0 +1,362 @@
+{% extends "base.html" %}
+
+{% block title %}Maintenance Schedule & Inspections — Pocket Mechanic{% endblock %}
+
+{% block content %}
+<div class="pm-page-header">
+  <div class="pm-page-header-content">
+    <div class="pm-page-pretitle">PREDICTIVE MAINTENANCE</div>
+    <h1 class="pm-page-title">Maintenance Schedule & Inspection Checklists</h1>
+    <p class="pm-page-desc">
+      Manufacturer interval recommendations, inspection checklists, and verified service logging for {{ active_bike.mfg_name }} {{ active_bike.model_name }}.
+    </p>
+  </div>
+  <div class="pm-page-header-actions">
+    <button class="btn btn-pm-primary" data-bs-toggle="modal" data-bs-target="#quickInspectionModal">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+      </svg>
+      Log Quick Inspection
+    </button>
+  </div>
+</div>
+
+<div class="pm-content-body">
+
+  <!-- Overview Stats -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-4">
+      <div class="pm-card p-3">
+        <span class="pm-spec-label">Current Odometer</span>
+        <div class="d-flex align-items-baseline gap-2 mt-1">
+          <span class="fs-3 fw-bold text-white font-monospace">{{ active_bike.current_odometer_km }}</span>
+          <span class="text-secondary small">km</span>
+        </div>
+        <div class="text-secondary small mt-1">Motorcycle: {{ active_bike.model_name }} ({{ active_bike.registration_number }})</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="pm-card p-3">
+        <span class="pm-spec-label">Next Periodic Interval</span>
+        <div class="d-flex align-items-baseline gap-2 mt-1">
+          <span class="fs-3 fw-bold text-cyan font-monospace">5,000</span>
+          <span class="text-secondary small">km Milestone</span>
+        </div>
+        <div class="text-secondary small mt-1">Engine Oil & Filter Renewal per OEM standard</div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="pm-card p-3">
+        <span class="pm-spec-label">Inspection Compliance</span>
+        <div class="d-flex align-items-baseline gap-2 mt-1">
+          <span class="fs-3 fw-bold text-success font-monospace">Good</span>
+          <span class="text-secondary small">Condition</span>
+        </div>
+        <div class="text-secondary small mt-1">All pre-ride safety criteria within limits</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Service Milestones Progress -->
+  <div class="pm-card mb-4">
+    <div class="pm-card-header">
+      <div class="d-flex align-items-center gap-2">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+        <span class="pm-card-title">Major Service Milestones & Intervals</span>
+      </div>
+      <span class="text-secondary small">Based on {{ active_bike.current_odometer_km }} km</span>
+    </div>
+
+    <div class="p-3">
+      <div class="row g-3">
+        {% for m in milestones %}
+        <div class="col-md-6 col-xl-4">
+          <div class="pm-milestone-card {% if m.is_due %}due{% endif %}">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <strong class="text-white small">{{ m.title }}</strong>
+              {% if m.is_due %}
+              <span class="pm-pill pm-pill-warning">Service Due</span>
+              {% else %}
+              <span class="pm-pill pm-pill-neutral">In {{ m.due_in_km }} km</span>
+              {% endif %}
+            </div>
+            <div class="d-flex justify-content-between align-items-baseline text-secondary small font-monospace">
+              <span>Interval: {{ m.km }} km</span>
+              <span>{{ active_bike.current_odometer_km }} / {{ m.km }} km</span>
+            </div>
+            <div class="progress mt-2" style="height: 4px; background: rgba(255,255,255,0.08);">
+              <div class="progress-bar {% if m.is_due %}bg-warning{% else %}bg-primary{% endif %}" style="width: {{ [100, (active_bike.current_odometer_km / m.km * 100) | round] | min }}%;"></div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Interactive Checklists -->
+  <div class="row g-4">
+    <!-- Pre-Ride Inspection Checklist -->
+    <div class="col-lg-6">
+      <div class="pm-card h-100 d-flex flex-column">
+        <div class="pm-card-header">
+          <div class="d-flex align-items-center gap-2">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 11l3 3L22 4"></path>
+              <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+            </svg>
+            <span class="pm-card-title">Pre-Ride Safety Checklist (Every Ride)</span>
+          </div>
+          <span class="pm-pill pm-pill-neutral">Daily</span>
+        </div>
+
+        <div class="p-3 flex-grow-1">
+          <div class="pm-checklist" id="preRideChecklist">
+            <div class="form-check mb-3">
+              <input class="form-check-input" type="checkbox" id="checkTyres" checked>
+              <label class="form-check-label text-white small" for="checkTyres">
+                <strong>Tyre Pressures & Condition</strong>
+                <div class="text-secondary" style="font-size: 0.75rem;">Check for foreign objects, cuts, and correct PSI ({{ active_bike.front_tyre_pressure_psi or 29 }}/{{ active_bike.rear_tyre_pressure_psi or 32 }} PSI).</div>
+              </label>
+            </div>
+            <div class="form-check mb-3">
+              <input class="form-check-input" type="checkbox" id="checkBrakes" checked>
+              <label class="form-check-label text-white small" for="checkBrakes">
+                <strong>Brake Lever & Pedal Operation</strong>
+                <div class="text-secondary" style="font-size: 0.75rem;">Ensure firm progressive feel with no spongeyness; inspect brake fluid level in sight glass.</div>
+              </label>
+            </div>
+            <div class="form-check mb-3">
+              <input class="form-check-input" type="checkbox" id="checkLights" checked>
+              <label class="form-check-label text-white small" for="checkLights">
+                <strong>Lights, Indicators & Horn</strong>
+                <div class="text-secondary" style="font-size: 0.75rem;">Verify low beam, high beam, brake light actuation, and indicators.</div>
+              </label>
+            </div>
+            <div class="form-check mb-3">
+              <input class="form-check-input" type="checkbox" id="checkCables" checked>
+              <label class="form-check-label text-white small" for="checkCables">
+                <strong>Controls & Cables Freeplay</strong>
+                <div class="text-secondary" style="font-size: 0.75rem;">Clutch lever free play (2-3 mm) and smooth throttle return across full handlebar lock.</div>
+              </label>
+            </div>
+            <div class="form-check mb-3">
+              <input class="form-check-input" type="checkbox" id="checkLeaks" checked>
+              <label class="form-check-label text-white small" for="checkLeaks">
+                <strong>Fluid Leaks Inspection</strong>
+                <div class="text-secondary" style="font-size: 0.75rem;">Check fork seals, radiator hoses, and under-engine casing for oil or coolant seepage.</div>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-3 border-top border-secondary">
+          <button class="btn btn-pm-secondary w-100 btn-sm" id="logPreRideBtn" data-bike-id="{{ active_bike.motorcycle_id }}" data-odo="{{ active_bike.current_odometer_km }}">
+            Sign Off Pre-Ride Inspection &rarr;
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Weekly & Periodic Maintenance Checklist -->
+    <div class="col-lg-6">
+      <div class="pm-card h-100 d-flex flex-column">
+        <div class="pm-card-header">
+          <div class="d-flex align-items-center gap-2">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+            </svg>
+            <span class="pm-card-title">Weekly & Periodic Mechanical Care</span>
+          </div>
+          <span class="pm-pill pm-pill-neutral">Weekly / 1,000 km</span>
+        </div>
+
+        <div class="p-3 flex-grow-1">
+          <div class="pm-checklist" id="weeklyChecklist">
+            <div class="form-check mb-3">
+              <input class="form-check-input" type="checkbox" id="checkChain" checked>
+              <label class="form-check-label text-white small" for="checkChain">
+                <strong>Drive Chain Tension & Lubrication</strong>
+                <div class="text-secondary" style="font-size: 0.75rem;">Verify slack (20 - 30 mm); clean with chain cleaner and apply dedicated synthetic chain lube.</div>
+              </label>
+            </div>
+            <div class="form-check mb-3">
+              <input class="form-check-input" type="checkbox" id="checkBattery" checked>
+              <label class="form-check-label text-white small" for="checkBattery">
+                <strong>Battery Voltage & Terminals</strong>
+                <div class="text-secondary" style="font-size: 0.75rem;">Resting voltage > 12.6V; clean terminals and confirm no white sulfate buildup.</div>
+              </label>
+            </div>
+            <div class="form-check mb-3">
+              <input class="form-check-input" type="checkbox" id="checkCoolant" checked>
+              <label class="form-check-label text-white small" for="checkCoolant">
+                <strong>Coolant & Oil Levels</strong>
+                <div class="text-secondary" style="font-size: 0.75rem;">Check oil inspection window on level stand; coolant level between MIN and MAX marks.</div>
+              </label>
+            </div>
+            <div class="form-check mb-3">
+              <input class="form-check-input" type="checkbox" id="checkBrakePads">
+              <label class="form-check-label text-white small" for="checkBrakePads">
+                <strong>Brake Pad Friction Material Thickness</strong>
+                <div class="text-secondary" style="font-size: 0.75rem;">Ensure pad friction lining is > 1.5 mm above the backing plate wear indicator grooves.</div>
+              </label>
+            </div>
+            <div class="form-check mb-3">
+              <input class="form-check-input" type="checkbox" id="checkFasteners">
+              <label class="form-check-label text-white small" for="checkFasteners">
+                <strong>Critical Chassis Fasteners</strong>
+                <div class="text-secondary" style="font-size: 0.75rem;">Check axle nuts, caliper mounting bolts, and footpeg brackets for proper torque.</div>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-3 border-top border-secondary">
+          <button class="btn btn-pm-secondary w-100 btn-sm" id="logWeeklyBtn" data-bike-id="{{ active_bike.motorcycle_id }}" data-odo="{{ active_bike.current_odometer_km }}">
+            Sign Off Weekly Mechanical Care &rarr;
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Completed Inspection Logs -->
+  <div class="pm-card mt-4">
+    <div class="pm-card-header">
+      <div class="d-flex align-items-center gap-2">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+        </svg>
+        <span class="pm-card-title">Recent Inspection & Service Records in Local MySQL</span>
+      </div>
+      <a href="{{ url_for('history.index') }}" class="btn btn-sm btn-pm-secondary">
+        View Full Service History &rarr;
+      </a>
+    </div>
+
+    <div class="table-responsive">
+      <table class="pm-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Type</th>
+            <th>Odometer</th>
+            <th>Description</th>
+            <th>Inspector</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if recent_logs %}
+          {% for r in recent_logs %}
+          <tr>
+            <td class="font-monospace text-light small">{{ r.service_date }}</td>
+            <td><span class="pm-tag">{{ r.service_type }}</span></td>
+            <td class="font-monospace text-secondary small">{{ r.odometer_reading_km }} km</td>
+            <td class="text-white small">{{ r.description }}</td>
+            <td class="text-secondary small">{{ r.performed_by or 'Owner' }}</td>
+          </tr>
+          {% endfor %}
+          {% else %}
+          <tr>
+            <td colspan="5" class="text-center py-4 text-secondary small">
+              No inspections logged yet. Use the checklists above to record your first inspection!
+            </td>
+          </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- Quick Inspection Modal -->
+<div class="modal fade" id="quickInspectionModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content bg-card border-secondary">
+      <div class="modal-header border-secondary">
+        <h5 class="modal-title text-white fs-6">Log Inspection or Maintenance Event</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="quickInspectionForm">
+          <div class="mb-3">
+            <label class="pm-form-label">Inspection Title</label>
+            <input type="text" class="pm-input" id="modalInspTitle" value="Routine Inspection Completed">
+          </div>
+          <div class="mb-3">
+            <label class="pm-form-label">Odometer Reading (km)</label>
+            <input type="number" class="pm-input font-monospace" id="modalInspOdo" value="{{ active_bike.current_odometer_km }}">
+          </div>
+          <div class="mb-3">
+            <label class="pm-form-label">Inspection Notes & Component Findings</label>
+            <textarea class="pm-input" id="modalInspNotes" rows="3">All pre-ride and mechanical items verified within OEM specifications.</textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer border-secondary">
+        <button type="button" class="btn btn-sm btn-pm-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-sm btn-pm-primary" id="modalSubmitInspBtn">Save to MySQL Logbook</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  async function submitInspection(title, notes, odo, bikeId) {
+    try {
+      const res = await fetch('/api/history/log-inspection', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          motorcycle_id: bikeId,
+          checklist_title: title,
+          notes: notes,
+          odometer_reading_km: odo
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        window.location.reload();
+      } else {
+        alert(data.error || 'Failed to record inspection.');
+      }
+    } catch (e) {
+      alert('Communication error recording inspection.');
+    }
+  }
+
+  const preRideBtn = document.getElementById('logPreRideBtn');
+  if (preRideBtn) {
+    preRideBtn.addEventListener('click', () => {
+      submitInspection('Pre-Ride Safety Inspection', 'Tyres, brakes, lights, cables, and fluid levels inspected and passed.', parseInt(preRideBtn.dataset.odo, 10), parseInt(preRideBtn.dataset.bikeId, 10));
+    });
+  }
+
+  const weeklyBtn = document.getElementById('logWeeklyBtn');
+  if (weeklyBtn) {
+    weeklyBtn.addEventListener('click', () => {
+      submitInspection('Weekly Mechanical Care', 'Drive chain cleaned & tensioned, battery voltage verified, coolant and brake pads inspected.', parseInt(weeklyBtn.dataset.odo, 10), parseInt(weeklyBtn.dataset.bikeId, 10));
+    });
+  }
+
+  const modalSubmitBtn = document.getElementById('modalSubmitInspBtn');
+  if (modalSubmitBtn) {
+    modalSubmitBtn.addEventListener('click', () => {
+      const title = document.getElementById('modalInspTitle').value.trim();
+      const odo = parseInt(document.getElementById('modalInspOdo').value, 10);
+      const notes = document.getElementById('modalInspNotes').value.trim();
+      submitInspection(title, notes, odo, {{ active_bike.motorcycle_id }});
+    });
+  }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="{{ dev_settings.THEME_MODE | lower if dev_settings else 'dark' }}" data-bs-theme="{{ dev_settings.THEME_MODE | lower if dev_settings else 'dark' }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Pocket Mechanic — Intelligent Motorcycle Diagnostics{% endblock %}</title>
+
+  <!-- Local Favicon with Authentic Wrenchy Brand -->
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/favicon.png') }}">
+
+  <!-- Local Vendored Bootstrap 5 CSS (100% Offline, Zero CDN) -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='vendor/bootstrap/css/bootstrap.min.css') }}">
+  <!-- Custom Desktop Application Stylesheet -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/wrenchy.css') }}">
+</head>
+<body class="pm-app-body">
+
+  <div class="pm-app-shell">
+    <!-- ==================================================================== -->
+    <!-- LEFT PERSISTENT SIDEBAR NAVIGATION (Notion-Style Hierarchy)          -->
+    <!-- ==================================================================== -->
+    <aside class="pm-sidebar" aria-label="Sidebar Navigation">
+      <div class="pm-sidebar-top">
+        <!-- macOS Window Header & Static Software Brand Logo -->
+        <div class="pm-sidebar-brand-wrapper">
+          <a href="{{ url_for('dashboard.home' if current_user.is_authenticated else 'dashboard.welcome') }}" class="pm-sidebar-brand text-decoration-none">
+            <img src="{{ url_for('static', filename='images/wrenchy_brand.png') }}" class="pm-sidebar-logo" alt="Pocket Mechanic Logo">
+            <div class="pm-sidebar-brand-meta">
+              <span class="pm-brand-name">Pocket Mechanic</span>
+              <span class="pm-brand-badge">macOS • Local</span>
+            </div>
+          </a>
+        </div>
+
+        {% if current_user.is_authenticated %}
+        <!-- Notion-Style Motorcycle Switcher / Workspace Dropdown -->
+        <div class="pm-workspace-selector dropdown">
+          <button class="pm-workspace-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <div class="pm-workspace-info">
+              <div class="pm-workspace-title text-truncate">
+                {{ active_bike_summary.model_name if active_bike_summary else 'Motorcycle Fleet' }}
+              </div>
+              <div class="pm-workspace-subtitle">
+                <span class="indicator-dot indicator-green"></span>
+                <span>{{ active_bike_summary.registration_number if active_bike_summary else 'Active Fleet' }}</span>
+              </div>
+            </div>
+            <svg class="pm-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
+
+          <ul class="dropdown-menu pm-dropdown-menu shadow">
+            <li class="pm-dropdown-header">SWITCH MOTORCYCLE</li>
+            {% for b in user_bikes_list %}
+            <li>
+              <a class="dropdown-item pm-dropdown-item d-flex justify-content-between align-items-center" href="#" data-switch-bike-id="{{ b.motorcycle_id }}">
+                <span class="text-truncate">{{ b.mfg_name }} {{ b.model_name }}</span>
+                {% if active_bike_summary and active_bike_summary.motorcycle_id == b.motorcycle_id %}
+                <span class="pm-pill pm-pill-active" style="font-size: 0.65rem;">Active</span>
+                {% else %}
+                <span class="font-monospace text-secondary" style="font-size: 0.7rem;">{{ b.registration_number }}</span>
+                {% endif %}
+              </a>
+            </li>
+            {% endfor %}
+            <li><hr class="dropdown-divider border-secondary"></li>
+            <li>
+              <a class="dropdown-item pm-dropdown-item d-flex align-items-center gap-2 text-cyan" href="#" data-bs-toggle="modal" data-bs-target="#addBikeModal">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                <span>Add Motorcycle...</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+        {% endif %}
+
+        <!-- Navigation Sections -->
+        <nav class="pm-sidebar-nav" aria-label="Main App Navigation">
+          {% if current_user.is_authenticated %}
+          <!-- SECTION 1: WORKSPACE -->
+          <div class="pm-nav-group-label">WORKSPACE</div>
+          <a href="{{ url_for('dashboard.home') }}" class="pm-nav-item {% if request.endpoint == 'dashboard.home' %}active{% endif %}">
+            <svg class="pm-nav-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="7" height="7"></rect>
+              <rect x="14" y="3" width="7" height="7"></rect>
+              <rect x="14" y="14" width="7" height="7"></rect>
+              <rect x="3" y="14" width="7" height="7"></rect>
+            </svg>
+            <span>Overview</span>
+          </a>
+          <a href="{{ url_for('dashboard.garage') }}" class="pm-nav-item {% if request.endpoint == 'dashboard.garage' %}active{% endif %}">
+            <svg class="pm-nav-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+              <polyline points="9 22 9 12 15 12 15 22"></polyline>
+            </svg>
+            <span>Garage & Fleet</span>
+          </a>
+
+          <!-- SECTION 2: DIAGNOSTICS & TELEMETRY -->
+          <div class="pm-nav-group-label">DIAGNOSTICS & TELEMETRY</div>
+          <a href="{{ url_for('diagnostics.index') }}" class="pm-nav-item {% if request.endpoint == 'diagnostics.index' or request.endpoint == 'diagnostics.report_view' %}active{% endif %}">
+            <svg class="pm-nav-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+            </svg>
+            <span>Diagnostics Suite</span>
+          </a>
+          <a href="{{ url_for('telemetry.index') }}" class="pm-nav-item {% if request.endpoint == 'telemetry.index' %}active{% endif %}">
+            <svg class="pm-nav-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="2"></circle>
+              <path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"></path>
+            </svg>
+            <span>Live Telemetry</span>
+          </a>
+
+          <!-- SECTION 3: MAINTENANCE -->
+          <div class="pm-nav-group-label">MAINTENANCE & LOGS</div>
+          <a href="{{ url_for('history.index') }}" class="pm-nav-item {% if request.endpoint == 'history.index' %}active{% endif %}">
+            <svg class="pm-nav-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            <span>Service History</span>
+          </a>
+          <a href="{{ url_for('history.schedule') }}" class="pm-nav-item {% if request.endpoint == 'history.schedule' %}active{% endif %}">
+            <svg class="pm-nav-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            <span>Maintenance Schedule</span>
+          </a>
+
+          <!-- SECTION 4: INTELLIGENCE -->
+          <div class="pm-nav-group-label">INTELLIGENCE</div>
+          <a href="{{ url_for('wrenchy.index') }}" class="pm-nav-item {% if request.endpoint == 'wrenchy.index' %}active{% endif %}">
+            <svg class="pm-nav-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+            <span>Wrenchy AI Assistant</span>
+          </a>
+          {% else %}
+          <div class="pm-nav-group-label">WELCOME</div>
+          <a href="{{ url_for('dashboard.welcome') }}" class="pm-nav-item active">
+            <svg class="pm-nav-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            </svg>
+            <span>Welcome & Setup</span>
+          </a>
+          {% endif %}
+        </nav>
+      </div>
+
+      <!-- Sidebar Bottom: Settings & Rider Profile (Local MySQL indicator removed per request) -->
+      <div class="pm-sidebar-bottom">
+        {% if current_user.is_authenticated %}
+        <!-- Settings Link -->
+        <a href="{{ url_for('dashboard.settings') }}" class="pm-nav-item {% if request.endpoint == 'dashboard.settings' %}active{% endif %} mb-1">
+          <svg class="pm-nav-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+          <span>Settings & Local Data</span>
+        </a>
+
+        <!-- Rider Profile Card -->
+        <div class="pm-profile-pill">
+          <div class="pm-profile-avatar">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+          </div>
+          <div class="pm-profile-text text-truncate">
+            <div class="pm-profile-name text-truncate">{{ current_user.full_name }}</div>
+            <div class="pm-profile-sub">Local Rider Profile</div>
+          </div>
+          <a href="{{ url_for('auth.logout') }}" class="pm-profile-logout-btn" title="Sign Out / Switch Rider" aria-label="Sign out">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+          </a>
+        </div>
+        {% else %}
+        <div class="p-2">
+          <a href="{{ url_for('auth.login') }}" class="btn btn-sm btn-pm-secondary w-100 mb-1">Sign In</a>
+          <a href="{{ url_for('auth.register') }}" class="btn btn-sm btn-pm-primary w-100">Setup Profile</a>
+        </div>
+        {% endif %}
+      </div>
+    </aside>
+
+    <!-- ==================================================================== -->
+    <!-- MAIN WORKSPACE CONTENT CONTAINER                                     -->
+    <!-- ==================================================================== -->
+    <main class="pm-main-wrapper" id="pmMainContent">
+      <!-- Top Desktop App Status Bar -->
+      <header class="pm-app-topbar">
+        <div class="d-flex align-items-center gap-2">
+          <!-- Active Bike Quick Pill -->
+          {% if current_user.is_authenticated and active_bike_summary %}
+          <div class="pm-topbar-bike-pill">
+            <span class="indicator-dot indicator-green"></span>
+            <span class="pm-topbar-bike-title">{{ active_bike_summary.mfg_name }} {{ active_bike_summary.model_name }}</span>
+            <span class="pm-reg-badge small">{{ active_bike_summary.registration_number }}</span>
+          </div>
+          {% endif %}
+        </div>
+
+        <div class="d-flex align-items-center gap-2">
+          <!-- Data Source Mode Pill -->
+          <span class="pm-pill pm-pill-neutral font-monospace">
+            {{ dev_settings.DATA_SOURCE_MODE if dev_settings else 'SIMULATOR' }}
+          </span>
+
+          <!-- Quick Theme Toggle -->
+          <button class="pm-theme-toggle-btn" id="pmThemeToggleBtn" title="Toggle Light/Dark Mode" aria-label="Toggle Theme">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- Page Content Block -->
+      <div class="pm-main-canvas">
+        {% block content %}{% endblock %}
+      </div>
+    </main>
+  </div>
+
+  <!-- ====================================================================== -->
+  <!-- WRENCHY AI: INTERACTIVE ANIMATED ASSISTANT CHARACTER WIDGET            -->
+  <!-- ====================================================================== -->
+  {% if current_user.is_authenticated %}
+  <aside class="wrenchy-widget-container" aria-label="Wrenchy AI Assistant">
+    <div class="wrenchy-bubble" id="wrenchyBubble">
+      Hey {{ current_user.full_name }}! Ready to inspect your bike?
+    </div>
+    <!-- Animated Interactive SVG Character (Idle Breathing, 5s Periodic Wave, Speaking Mouth/Arms) -->
+    <button class="wrenchy-avatar-btn" id="wrenchyAvatarBtn" title="Chat with Wrenchy AI" aria-label="Chat with Wrenchy AI">
+      <svg id="wrenchySvg" class="wrenchy-character" viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="wrenchChrome" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#94a3b8" />
+            <stop offset="50%" stop-color="#cbd5e1" />
+            <stop offset="100%" stop-color="#64748b" />
+          </linearGradient>
+          <linearGradient id="wrenchEye" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#38bdf8" />
+            <stop offset="100%" stop-color="#0284c7" />
+          </linearGradient>
+        </defs>
+
+        <!-- Entire Character Body Group (Breathing Animation) -->
+        <g class="wrenchy-body-group">
+          <!-- Legs -->
+          <rect x="36" y="96" width="8" height="16" rx="4" fill="#475569" />
+          <rect x="56" y="96" width="8" height="16" rx="4" fill="#475569" />
+          <!-- Shoes -->
+          <ellipse cx="38" cy="112" rx="7" ry="4" fill="#1e293b" />
+          <ellipse cx="62" cy="112" rx="7" ry="4" fill="#1e293b" />
+
+          <!-- Left Arm (Gestures when speaking) -->
+          <g class="wrenchy-left-arm">
+            <path d="M 28 52 Q 14 58 12 70" stroke="#64748b" stroke-width="6" stroke-linecap="round" fill="none" />
+            <circle cx="12" cy="71" r="5" fill="#94a3b8" />
+          </g>
+
+          <!-- Right Arm (Periodic Waving Hand Animation) -->
+          <g class="wrenchy-right-arm">
+            <path d="M 72 52 Q 86 52 88 40" stroke="#64748b" stroke-width="6" stroke-linecap="round" fill="none" />
+            <circle cx="89" cy="38" r="5" fill="#94a3b8" />
+          </g>
+
+          <!-- Wrench Head (Open-Ended Spanner Crown) -->
+          <path d="M 32 18 C 32 6 42 2 50 2 C 58 2 68 6 68 18 C 68 25 64 30 60 33 L 60 92 C 60 96 55 98 50 98 C 45 98 40 96 40 92 L 40 33 C 36 30 32 25 32 18 Z"
+                fill="url(#wrenchChrome)" stroke="#334155" stroke-width="2.5" />
+          <!-- Spanner Jaws cutout -->
+          <path d="M 42 2 L 50 14 L 58 2 Z" fill="#0f172a" />
+
+          <!-- Friendly Face Inside Wrench Body -->
+          <!-- Eyes -->
+          <ellipse cx="44" cy="42" rx="4.5" ry="5.5" fill="#0f172a" />
+          <ellipse cx="56" cy="42" rx="4.5" ry="5.5" fill="#0f172a" />
+          <circle cx="45" cy="40.5" r="1.8" fill="url(#wrenchEye)" />
+          <circle cx="57" cy="40.5" r="1.8" fill="url(#wrenchEye)" />
+          <circle cx="43.5" cy="39.5" r="0.8" fill="#ffffff" />
+          <circle cx="55.5" cy="39.5" r="0.8" fill="#ffffff" />
+
+          <!-- Cheeks -->
+          <ellipse cx="40" cy="48" rx="2.5" ry="1.5" fill="rgba(244, 63, 94, 0.4)" />
+          <ellipse cx="60" cy="48" rx="2.5" ry="1.5" fill="rgba(244, 63, 94, 0.4)" />
+
+          <!-- Smiling Mouth (Animates speaking rhythm) -->
+          <path class="wrenchy-mouth" d="M 45 50 Q 50 56 55 50" stroke="#0f172a" stroke-width="2.5" stroke-linecap="round" fill="none" />
+        </g>
+      </svg>
+    </button>
+  </aside>
+
+  <!-- Wrenchy Floating Chat Modal -->
+  <aside class="wrenchy-modal" id="wrenchyChatModal" style="display: none;" aria-label="Wrenchy Chat Dialog">
+    <div class="wrenchy-modal-header">
+      <div class="d-flex align-items-center gap-2">
+        <img src="{{ url_for('static', filename='images/wrenchy_brand.png') }}" style="width: 20px; height: 20px; object-fit: contain;" alt="Wrenchy">
+        <strong class="pm-modal-title small">Wrenchy AI Motorcycle Assistant</strong>
+      </div>
+      <button class="btn-close btn-close-white" id="wrenchyCloseModalBtn" aria-label="Close Wrenchy Chat"></button>
+    </div>
+    <div class="wrenchy-messages-box" id="wrenchyMessagesBox">
+      <div class="wrenchy-msg assistant">
+        Hello {{ current_user.full_name }}! I'm Wrenchy, your motorcycle mechanic. What would you like to inspect, diagnose, or check today?
+      </div>
+    </div>
+    <div class="wrenchy-modal-footer">
+      <input type="text" id="wrenchyInput" class="form-control form-control-sm pm-input" placeholder="Ask Wrenchy about sounds, specs, faults...">
+      <button class="btn btn-sm btn-pm-primary" id="wrenchySendBtn" aria-label="Send message to Wrenchy">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="22" y1="2" x2="11" y2="13"></line>
+          <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+        </svg>
+      </button>
+    </div>
+  </aside>
+  {% endif %}
+
+  <!-- Modal: Add Another Motorcycle -->
+  {% if current_user.is_authenticated %}
+  <div class="modal fade" id="addBikeModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content bg-card border-secondary">
+        <div class="modal-header border-secondary">
+          <h5 class="modal-title fs-6">Add Another Motorcycle</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="addBikeForm">
+            <div class="mb-3">
+              <label class="form-label small text-secondary">Manufacturer</label>
+              <select id="newBikeMfg" class="form-select form-select-pm">
+                <option value="">Select Manufacturer...</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label small text-secondary">Model</label>
+              <select id="newBikeModel" class="form-select form-select-pm" disabled>
+                <option value="">Choose manufacturer first...</option>
+              </select>
+            </div>
+            <div class="row g-2 mb-3">
+              <div class="col-6">
+                <label class="form-label small text-secondary">Year</label>
+                <input type="number" id="newBikeYear" class="form-control form-control-pm" value="2023" min="1980" max="2026">
+              </div>
+              <div class="col-6">
+                <label class="form-label small text-secondary">Colour</label>
+                <input type="text" id="newBikeColour" class="form-control form-control-pm" placeholder="e.g. Stealth Black">
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label small text-secondary">Registration Number</label>
+              <input type="text" id="newBikeReg" class="form-control form-control-pm font-monospace" placeholder="e.g. MH 12 AB 1234" required>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer border-secondary">
+          <button type="button" class="btn btn-sm btn-pm-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-sm btn-pm-primary" id="saveNewBikeBtn">Save Motorcycle</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Local Vendored Bootstrap 5 JS Bundle (100% Offline, Zero CDN) -->
+  <script src="{{ url_for('static', filename='vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+  <!-- Custom JS Modules -->
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/wrenchy.js') }}"></script>
+
+  <script>
+  // Topbar quick theme toggle listener (updates both data-theme and data-bs-theme)
+  const topThemeBtn = document.getElementById('pmThemeToggleBtn');
+  if (topThemeBtn) {
+    topThemeBtn.addEventListener('click', async () => {
+      const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', newTheme);
+      document.documentElement.setAttribute('data-bs-theme', newTheme);
+      try {
+        await fetch('/api/settings/update', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ key: 'THEME_MODE', value: newTheme.toUpperCase() })
+        });
+      } catch (e) {}
+    });
+  }
+  </script>
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>

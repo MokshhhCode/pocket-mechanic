@@ -1,0 +1,244 @@
+{% extends "base.html" %}
+
+{% block title %}Rider & Motorcycle Registration — Pocket Mechanic{% endblock %}
+
+{% block content %}
+<div class="container py-5 d-flex align-items-center justify-content-center min-vh-75">
+  <div class="pm-card shadow-lg p-4 p-md-5" style="max-width: 620px; width: 100%;">
+    <!-- Progress Indicator Header -->
+    <div class="d-flex align-items-center justify-content-between mb-4 pb-3 border-bottom border-secondary">
+      <div>
+        <h2 class="fs-5 fw-bold text-white mb-0" id="stepHeading">Part A: Rider Credentials</h2>
+        <span class="text-secondary small" id="stepSubheading">Personal verification & secure access setup</span>
+      </div>
+      <div class="d-flex gap-2">
+        <span class="badge badge-green px-3 py-2" id="pillPartA">Part A</span>
+        <span class="badge bg-secondary text-secondary px-3 py-2" id="pillPartB">Part B</span>
+      </div>
+    </div>
+
+    <form method="POST" action="{{ url_for('auth.register') }}" id="registerForm">
+      <!-- ================================================================= -->
+      <!-- PART A: USER DETAILS                                              -->
+      <!-- ================================================================= -->
+      <div id="sectionPartA">
+        <div class="mb-3">
+          <label for="fullName" class="form-label text-secondary small fw-medium">Full Legal Name (as per Driving Licence)</label>
+          <input type="text" class="form-control form-control-pm" id="fullName" name="full_name" placeholder="e.g. Moksh Suthar" required>
+        </div>
+
+        <div class="mb-3">
+          <label for="regEmail" class="form-label text-secondary small fw-medium">Email Address</label>
+          <input type="email" class="form-control form-control-pm" id="regEmail" name="email" placeholder="name@domain.com" required>
+        </div>
+
+        <div class="row g-2 mb-3">
+          <div class="col-md-6">
+            <label for="city" class="form-label text-secondary small fw-medium">Home City</label>
+            <input type="text" class="form-control form-control-pm" id="city" name="city" placeholder="e.g. Pune" required>
+          </div>
+          <div class="col-md-6">
+            <label for="state" class="form-label text-secondary small fw-medium">State</label>
+            <input type="text" class="form-control form-control-pm" id="state" name="state" placeholder="e.g. Maharashtra" required>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label for="licence" class="form-label text-secondary small fw-medium d-flex justify-content-between">
+            <span>Driving Licence Number</span>
+            <span class="text-cyan" style="font-size: 0.72rem;">🔒 AES-256 Encrypted at Rest</span>
+          </label>
+          <input type="text" class="form-control form-control-pm font-monospace" id="licence" name="licence_number" placeholder="e.g. MH12 20210012345" required>
+          <div class="form-text text-secondary" style="font-size: 0.72rem;">
+            Your licence number is strictly encrypted at rest and masked in all diagnostic reports.
+          </div>
+        </div>
+
+        <div class="row g-2 mb-4">
+          <div class="col-md-6">
+            <label for="regPassword" class="form-label text-secondary small fw-medium">Password</label>
+            <input type="password" class="form-control form-control-pm" id="regPassword" name="password" placeholder="At least 6 characters" required>
+          </div>
+          <div class="col-md-6">
+            <label for="confirmPassword" class="form-label text-secondary small fw-medium">Confirm Password</label>
+            <input type="password" class="form-control form-control-pm" id="confirmPassword" name="confirm_password" placeholder="Re-enter password" required>
+          </div>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center">
+          <a href="{{ url_for('auth.login') }}" class="text-secondary small text-decoration-none">Already registered? Sign In</a>
+          <button type="button" class="btn btn-pm-primary" id="btnNextToPartB">
+            Proceed to Motorcycle Registration &rarr;
+          </button>
+        </div>
+      </div>
+
+      <!-- ================================================================= -->
+      <!-- PART B: MOTORCYCLE REGISTRATION                                   -->
+      <!-- ================================================================= -->
+      <div id="sectionPartB" style="display: none;">
+        <div class="mb-3">
+          <label for="regMfg" class="form-label text-secondary small fw-medium">Motorcycle Manufacturer</label>
+          <select class="form-select form-select-pm" id="regMfg" name="manufacturer_id">
+            <option value="">Select Manufacturer (28 Verified Brands)...</option>
+            {% for mfg in manufacturers %}
+              <option value="{{ mfg.manufacturer_id }}">{{ mfg.name }} ({{ mfg.country }})</option>
+            {% endfor %}
+            <option value="other">Other / Not Listed</option>
+          </select>
+        </div>
+
+        <div class="mb-3" id="modelSelectGroup">
+          <label for="regModel" class="form-label text-secondary small fw-medium">Motorcycle Model</label>
+          <select class="form-select form-select-pm" id="regModel" name="model_id" disabled>
+            <option value="">Choose manufacturer first...</option>
+          </select>
+        </div>
+
+        <!-- Custom Make & Model Fallback when "Other" is chosen -->
+        <div id="customBikeGroup" style="display: none;" class="mb-3 p-3 bg-elevated rounded border border-secondary">
+          <div class="row g-2">
+            <div class="col-md-6">
+              <label for="customMake" class="form-label text-secondary small fw-medium">Custom Make</label>
+              <input type="text" class="form-control form-control-pm" id="customMake" name="custom_make" placeholder="e.g. Custom Chopper">
+            </div>
+            <div class="col-md-6">
+              <label for="customModel" class="form-label text-secondary small fw-medium">Custom Model</label>
+              <input type="text" class="form-control form-control-pm" id="customModel" name="custom_model" placeholder="e.g. Special Edition">
+            </div>
+          </div>
+        </div>
+
+        <div class="row g-2 mb-3">
+          <div class="col-md-6">
+            <label for="regYear" class="form-label text-secondary small fw-medium">Manufacturing Year</label>
+            <input type="number" class="form-control form-control-pm" id="regYear" name="manufacturing_year" value="2023" min="1970" max="2026" required>
+          </div>
+          <div class="col-md-6">
+            <label for="regColour" class="form-label text-secondary small fw-medium">Colour</label>
+            <input type="text" class="form-control form-control-pm" id="regColour" name="colour" placeholder="e.g. Stealth Black" required>
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <label for="regPlate" class="form-label text-secondary small fw-medium">Vehicle Registration Number</label>
+          <input type="text" class="form-control form-control-pm font-monospace" id="regPlate" name="registration_number" placeholder="e.g. MH 12 AB 1234" required>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center">
+          <button type="button" class="btn btn-pm-secondary" id="btnBackToPartA">
+            &larr; Back to Rider Details
+          </button>
+          <button type="submit" class="btn btn-pm-primary">
+            Complete Registration & Enter Garage
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const sectionPartA = document.getElementById("sectionPartA");
+  const sectionPartB = document.getElementById("sectionPartB");
+  const stepHeading = document.getElementById("stepHeading");
+  const stepSubheading = document.getElementById("stepSubheading");
+  const pillPartA = document.getElementById("pillPartA");
+  const pillPartB = document.getElementById("pillPartB");
+
+  const btnNext = document.getElementById("btnNextToPartB");
+  const btnBack = document.getElementById("btnBackToPartA");
+
+  const mfgSelect = document.getElementById("regMfg");
+  const modelSelect = document.getElementById("regModel");
+  const modelGroup = document.getElementById("modelSelectGroup");
+  const customGroup = document.getElementById("customBikeGroup");
+
+  // Part A -> Part B transition validation
+  btnNext.addEventListener("click", function() {
+    const fullName = document.getElementById("fullName").value.trim();
+    const email = document.getElementById("regEmail").value.trim();
+    const city = document.getElementById("city").value.trim();
+    const state = document.getElementById("state").value.trim();
+    const licence = document.getElementById("licence").value.trim();
+    const pwd = document.getElementById("regPassword").value;
+    const confirmPwd = document.getElementById("confirmPassword").value;
+
+    if (!fullName || !email || !city || !state || !licence || !pwd) {
+      alert("Please fill in all Part A fields before proceeding.");
+      return;
+    }
+    if (pwd.length < 6) {
+      alert("Password must contain at least 6 characters.");
+      return;
+    }
+    if (pwd !== confirmPwd) {
+      alert("Passwords do not match.");
+      return;
+    }
+
+    // Smooth transition
+    sectionPartA.style.display = "none";
+    sectionPartB.style.display = "block";
+    stepHeading.innerText = "Part B: Motorcycle Registration";
+    stepSubheading.innerText = "Select or enter your motorcycle specifications";
+    pillPartA.className = "badge bg-secondary text-secondary px-3 py-2";
+    pillPartB.className = "badge badge-green px-3 py-2";
+  });
+
+  btnBack.addEventListener("click", function() {
+    sectionPartB.style.display = "none";
+    sectionPartA.style.display = "block";
+    stepHeading.innerText = "Part A: Rider Credentials";
+    stepSubheading.innerText = "Personal verification & secure access setup";
+    pillPartA.className = "badge badge-green px-3 py-2";
+    pillPartB.className = "badge bg-secondary text-secondary px-3 py-2";
+  });
+
+  // Dynamic model dropdown loader
+  mfgSelect.addEventListener("change", function() {
+    const mfgId = this.value;
+    if (mfgId === "other") {
+      modelGroup.style.display = "none";
+      customGroup.style.display = "block";
+      modelSelect.disabled = true;
+      modelSelect.innerHTML = "<option value=''>Custom bike selected</option>";
+    } else if (mfgId) {
+      modelGroup.style.display = "block";
+      customGroup.style.display = "none";
+      modelSelect.disabled = true;
+      modelSelect.innerHTML = "<option value=''>Loading catalogue models...</option>";
+
+      fetch(`/api/motorcycles/models/${mfgId}`)
+        .then(r => r.json())
+        .then(models => {
+          modelSelect.disabled = false;
+          modelSelect.innerHTML = "<option value=''>Select Model...</option>";
+          models.forEach(m => {
+            modelSelect.innerHTML += `<option value="${m.model_id}">${m.name} (${m.category})</option>`;
+          });
+          modelSelect.innerHTML += "<option value='other_model'>Other Model</option>";
+        })
+        .catch(err => {
+          modelSelect.innerHTML = "<option value=''>Error loading models</option>";
+        });
+    } else {
+      modelSelect.disabled = true;
+      modelSelect.innerHTML = "<option value=''>Choose manufacturer first...</option>";
+      customGroup.style.display = "none";
+    }
+  });
+
+  modelSelect.addEventListener("change", function() {
+    if (this.value === "other_model") {
+      customGroup.style.display = "block";
+    } else {
+      customGroup.style.display = "none";
+    }
+  });
+});
+</script>
+{% endblock %}

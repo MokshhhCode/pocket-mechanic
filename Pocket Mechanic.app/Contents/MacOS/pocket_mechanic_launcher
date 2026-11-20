@@ -1,0 +1,29 @@
+#!/bin/bash
+# ==============================================================================
+# Pocket Mechanic - macOS Application Bundle Launcher
+# ==============================================================================
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/../../.." >/dev/null 2>&1 && pwd )"
+cd "$DIR"
+
+export PATH="/Library/Frameworks/Python.framework/Versions/3.11/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:$PATH"
+
+PYTHON_EXEC=""
+for candidate in "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3" "/usr/local/bin/python3" "/opt/homebrew/bin/python3" "$(which python3 2>/dev/null)"; do
+  if [ -x "$candidate" ] && "$candidate" -c "import webview" >/dev/null 2>&1; then
+    PYTHON_EXEC="$candidate"
+    break
+  fi
+done
+
+if [ -z "$PYTHON_EXEC" ]; then
+  osascript -e 'display alert "Pocket Mechanic" message "Could not find Python 3 with pywebview installed. Please run ./run_desktop.sh from Terminal." as critical'
+  exit 1
+fi
+
+if ! nc -z 127.0.0.1 3306 2>/dev/null; then
+  /opt/homebrew/bin/brew services start mysql 2>/dev/null || brew services start mysql 2>/dev/null || true
+  sleep 1
+fi
+
+exec "$PYTHON_EXEC" desktop/desktop_main.py "$@"
