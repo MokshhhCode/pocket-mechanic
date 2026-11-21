@@ -25,8 +25,9 @@ class Config:
         "pool_pre_ping": True,
     }
     
-    # OpenAI API Configuration
-    OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+    # LLM API Configuration (OpenAI & Google Gemini)
+    OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "").strip()
+    GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip()
     
     # Application Paths
     BASE_DIR = os.path.abspath(os.path.dirname(__file__))

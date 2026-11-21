@@ -38,35 +38,6 @@ def create_app():
             "mode": "desktop-local"
         })
 
-    # Seamless Local-First Authentication: Auto-login local rider without login wall
-    @app.before_request
-    def auto_authenticate_local_rider():
-        if app.config.get('TESTING'):
-            return
-
-        endpoint = request.endpoint or ""
-        # Don't auto-login if the user is explicitly on auth screens or welcome or fetching static assets/health
-        if endpoint in ('dashboard.welcome', 'health_check') or endpoint.startswith('auth.') or endpoint.startswith('static'):
-            return
-
-        if not current_user.is_authenticated:
-            default_user = User.get_default_local_user()
-            if default_user:
-                login_user(default_user, remember=True)
-                if 'active_motorcycle_id' not in session:
-                    conn = get_db_connection()
-                    try:
-                        with conn.cursor() as cursor:
-                            cursor.execute(
-                                "SELECT motorcycle_id FROM motorcycles WHERE user_id = %s AND is_active = TRUE ORDER BY motorcycle_id ASC LIMIT 1",
-                                (default_user.id,)
-                            )
-                            bike = cursor.fetchone()
-                            if bike:
-                                session['active_motorcycle_id'] = bike['motorcycle_id']
-                    finally:
-                        conn.close()
-
     # Register Modular Blueprints
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
@@ -79,10 +50,15 @@ def create_app():
     # Global Template Context Processor (Exposes Dev Toolbar settings & active motorcycle)
     @app.context_processor
     def inject_global_context():
+        # Read persistent theme preference from session, cookie, or default DARK
+        client_cookie_theme = request.cookies.get('pm_theme', '').upper()
+        session_theme = session.get('THEME_MODE', '').upper()
+        active_theme = session_theme if session_theme in ("LIGHT", "DARK") else (client_cookie_theme if client_cookie_theme in ("LIGHT", "DARK") else None)
+
         dev_settings = {
             "DATA_SOURCE_MODE": "SIMULATOR",
             "SIMULATION_INTENSITY": "REGULAR",
-            "THEME_MODE": "DARK",
+            "THEME_MODE": active_theme or "DARK",
             "LIVE_ML_DIAGNOSTICS": "ON"
         }
         active_bike_summary = None
@@ -92,13 +68,41 @@ def create_app():
             conn = get_db_connection()
             try:
                 with conn.cursor() as cursor:
-                    # User settings
+                    # User settings (NULL defaults loaded first, user-specific overrides second)
                     cursor.execute(
-                        "SELECT setting_key, setting_value FROM application_settings WHERE user_id = %s OR user_id IS NULL",
+                        """
+                        SELECT setting_key, setting_value FROM application_settings
+                        WHERE user_id = %s OR user_id IS NULL
+                        ORDER BY (user_id IS NOT NULL) ASC, updated_at ASC
+                        """,
                         (current_user.id,)
                     )
+                    db_theme = None
                     for r in cursor.fetchall():
                         dev_settings[r['setting_key']] = r['setting_value']
+                        if r['setting_key'] == 'THEME_MODE':
+                            db_theme = r['setting_value'].upper()
+
+                    # If user has an explicit theme preference from session or cookie, respect it
+                    if active_theme in ("LIGHT", "DARK"):
+                        dev_settings["THEME_MODE"] = active_theme
+                        session['THEME_MODE'] = active_theme
+                        # Sync DB if it differs
+                        if db_theme != active_theme:
+                            cursor.execute(
+                                """
+                                INSERT INTO application_settings (user_id, setting_key, setting_value)
+                                VALUES (%s, 'THEME_MODE', %s)
+                                ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value), updated_at = CURRENT_TIMESTAMP
+                                """,
+                                (current_user.id, active_theme)
+                            )
+                    else:
+                        db_t = dev_settings.get("THEME_MODE", "DARK").upper()
+                        if db_t not in ("LIGHT", "DARK"):
+                            db_t = "DARK"
+                        dev_settings["THEME_MODE"] = db_t
+                        session['THEME_MODE'] = db_t
 
                     # User bikes
                     cursor.execute(
@@ -133,12 +137,27 @@ def create_app():
                         active_bike_summary = cursor.fetchone()
             finally:
                 conn.close()
+        else:
+            if active_theme in ("LIGHT", "DARK"):
+                session['THEME_MODE'] = active_theme
+                dev_settings["THEME_MODE"] = active_theme
+            else:
+                session['THEME_MODE'] = dev_settings["THEME_MODE"]
 
         return {
             "dev_settings": dev_settings,
             "active_bike_summary": active_bike_summary,
             "user_bikes_list": user_bikes_list
         }
+
+    # Automatically synchronize theme cookie with active session theme on every request
+    @app.after_request
+    def set_theme_cookie(response):
+        theme = session.get('THEME_MODE')
+        if theme in ('LIGHT', 'DARK'):
+            if request.cookies.get('pm_theme') != theme.lower():
+                response.set_cookie('pm_theme', theme.lower(), max_age=31536000, samesite='Lax', path='/')
+        return response
 
     return app
 

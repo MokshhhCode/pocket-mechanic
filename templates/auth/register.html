@@ -5,6 +5,14 @@
 {% block content %}
 <div class="container py-5 d-flex align-items-center justify-content-center min-vh-75">
   <div class="pm-card shadow-lg p-4 p-md-5" style="max-width: 620px; width: 100%;">
+    <!-- Official Software Brand Logo -->
+    <div class="text-center mb-3">
+      <div class="mx-auto mb-2" style="width: 72px; height: 86px;">
+        <img src="{{ url_for('static', filename='images/wrenchy_brand.svg') }}?v=4" style="width: 72px; height: 86px; object-fit: contain; filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.45));" alt="Wrenchy — Official Software Logo">
+      </div>
+      <span class="pm-pill pm-pill-active" style="font-size: 0.68rem;">Local Offline MySQL</span>
+    </div>
+
     <!-- Progress Indicator Header -->
     <div class="d-flex align-items-center justify-content-between mb-4 pb-3 border-bottom border-secondary">
       <div>
@@ -133,6 +141,15 @@
             Complete Registration & Enter Garage
           </button>
         </div>
+      </div>
+
+      <div class="text-center mt-3 pt-2 border-top border-secondary">
+        <a href="{{ url_for('dashboard.welcome') }}" class="text-secondary small text-decoration-none d-inline-flex align-items-center gap-1">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+          <span>Return to Welcome Screen</span>
+        </a>
       </div>
     </form>
   </div>

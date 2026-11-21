@@ -56,8 +56,8 @@ def main():
     else:
         print(f"Backend already running on {HOST}:{PORT}.")
 
-    # 2. Window configuration
-    start_url = f"http://{HOST}:{PORT}/dashboard"
+    # 2. Window configuration: Launch to Home Landing screen (dashboard locked behind auth)
+    start_url = f"http://{HOST}:{PORT}/"
 
     window = webview.create_window(
         title="Pocket Mechanic",

@@ -63,7 +63,10 @@ class WrenchyAssistant {
 
     this.appendMessage("user", text);
     this.input.value = "";
+    if (this.input) this.input.disabled = true;
+    if (this.sendBtn) this.sendBtn.disabled = true;
     this.setSpeaking(true);
+    this.showLoading();
 
     fetch("/api/wrenchy/chat", {
       method: "POST",
@@ -75,7 +78,11 @@ class WrenchyAssistant {
     })
       .then((r) => r.json())
       .then((data) => {
+        this.removeLoading();
         this.setSpeaking(false);
+        if (this.input) { this.input.disabled = false; this.input.focus(); }
+        if (this.sendBtn) this.sendBtn.disabled = false;
+
         if (data.reply) {
           this.activeConvId = data.conversation_id;
           this.appendMessage("assistant", data.reply, data.suggested_action);
@@ -84,10 +91,37 @@ class WrenchyAssistant {
         }
       })
       .catch((err) => {
+        this.removeLoading();
         this.setSpeaking(false);
+        if (this.input) { this.input.disabled = false; this.input.focus(); }
+        if (this.sendBtn) this.sendBtn.disabled = false;
         this.appendMessage("assistant", "Sorry, I encountered a communication problem with the server.");
         console.error("Wrenchy error:", err);
       });
+  }
+
+  showLoading() {
+    this.removeLoading();
+    if (!this.messagesBox) return;
+    const div = document.createElement("div");
+    div.id = "wrenchyWidgetThinking";
+    div.className = "wrenchy-msg assistant d-flex align-items-center gap-2";
+    div.innerHTML = `
+      <span class="spinner-border spinner-border-sm text-cyan" role="status" style="width: 0.85rem; height: 0.85rem; border-width: 2px;"></span>
+      <div class="wrenchy-thinking-dots me-1">
+        <span class="dot"></span>
+        <span class="dot"></span>
+        <span class="dot"></span>
+      </div>
+      <span class="text-secondary small fst-italic">Thinking...</span>
+    `;
+    this.messagesBox.appendChild(div);
+    this.messagesBox.scrollTop = this.messagesBox.scrollHeight;
+  }
+
+  removeLoading() {
+    const el = document.getElementById("wrenchyWidgetThinking");
+    if (el) el.remove();
   }
 
   appendMessage(sender, text, action) {

@@ -74,7 +74,7 @@
           <div class="mb-4">
             <label for="diagModelSelect" class="form-label text-secondary small fw-medium d-flex justify-content-between">
               <span>4. Predictive Algorithm Selection</span>
-              <span class="text-cyan font-monospace" style="font-size: 0.72rem;">VIT TY Syllabus</span>
+              <span class="text-secondary font-monospace" style="font-size: 0.72rem;">Classical ML Models</span>
             </label>
             <select class="form-select form-select-pm" id="diagModelSelect">
               {% for m in ml_models %}
@@ -114,49 +114,254 @@
       <!-- 1. LIVE ML EXECUTION VIEW (When Toggle is ON) -->
       <div class="pm-card mb-4" id="liveMlPanel" {% if not live_ml_enabled %}style="display: none;"{% endif %}>
         <div class="pm-card-header pb-2 border-bottom border-secondary">
-          <div class="pm-card-title text-cyan">
+          <div class="pm-card-title text-cyan d-flex align-items-center gap-2">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
             </svg>
             <span>Live Machine Learning Pipeline Flow</span>
           </div>
-          <span class="badge bg-secondary text-cyan font-monospace">Real Execution Trace</span>
+          <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-secondary text-secondary small d-none d-sm-inline">Telemetry &rarr; Normalization &rarr; Ensemble &rarr; RUL</span>
+            <span class="badge bg-secondary text-cyan font-monospace">Real Execution Trace</span>
+          </div>
         </div>
 
         <div class="p-3">
-          <div class="row g-3">
-            <!-- Left: ML Preprocessing & Vector Output -->
-          <div class="col-md-6 border-end border-secondary">
-            <strong class="text-white small mb-2 d-block">ML Preprocessing & Features</strong>
-            <div class="p-2 rounded bg-elevated border border-secondary font-monospace text-secondary small" style="max-height: 240px; overflow-y: auto;" id="resTraceBox">
-              <div class="text-muted">Awaiting diagnostic session initialization...</div>
+          <!-- Top Mathematical Summary Strip (Course Project Academic Formulations) -->
+          <div class="ml-math-strip" id="mlMathSummaryStrip">
+            <div class="ml-math-strip-item">
+              <span class="ml-math-strip-label">Active Classifier:</span>
+              <span class="badge bg-dark border border-secondary text-cyan font-monospace px-2 py-1" id="summaryModelBadge">RandomForestClassifier(n_estimators=100)</span>
             </div>
-            <div class="mt-3">
-              <strong class="text-white small mb-1 d-block">Feature Importances (Random Forest)</strong>
-              <div id="resFeatureImportanceBox" class="mt-1">
-                <span class="text-muted small">Will calculate upon inference.</span>
-              </div>
+            <div class="ml-math-strip-item">
+              <span class="ml-math-strip-label">Input Space:</span>
+              <span class="badge bg-dark border border-secondary text-light font-monospace px-2 py-1">x &isin; &reals;<sup>14</sup></span>
+            </div>
+            <div class="ml-math-strip-item">
+              <span class="ml-math-strip-label">Normalization:</span>
+              <span class="badge bg-dark border border-secondary text-light font-monospace px-2 py-1">z = (x - &mu;) / &sigma;</span>
+            </div>
+            <div class="ml-math-strip-item">
+              <span class="ml-math-strip-label">Latent Projection:</span>
+              <span class="badge bg-dark border border-secondary text-cyan font-monospace px-2 py-1" id="summaryLatentBadge">PCA 2D (40.0% Var)</span>
+            </div>
+            <div class="ml-math-strip-item">
+              <span class="ml-math-strip-label">Operating Regime:</span>
+              <span class="badge bg-dark border border-secondary text-warning font-monospace px-2 py-1" id="summaryClusterBadge">K-Means (k=4) Centroid</span>
             </div>
           </div>
 
-          <!-- Right: Connected Pipeline Flow Boxes (11 Stages) -->
-          <div class="col-md-6">
-            <strong class="text-white small mb-2 d-block">Pipeline Flow Trace</strong>
-            <div class="pipeline-flow-container small font-monospace">
-              <div class="pipeline-step-box"><span>1. Motorcycle Profile Retrieved</span><span>✓</span></div>
-              <div class="pipeline-step-box"><span>2. Technical Specifications Loaded</span><span>✓</span></div>
-              <div class="pipeline-step-box"><span>3. Component Applicability Filtered</span><span>✓</span></div>
-              <div class="pipeline-step-box"><span>4. Sensor Telemetry Sampled</span><span>✓</span></div>
-              <div class="pipeline-step-box"><span>5. 14 Telemetry Features Extracted</span><span>✓</span></div>
-              <div class="pipeline-step-box"><span>6. StandardScaler Normalized</span><span>✓</span></div>
-              <div class="pipeline-step-box"><span>7. Latent PCA & K-Means Clustered</span><span>✓</span></div>
-              <div class="pipeline-step-box"><span>8. Classical Classifier Executed</span><span>✓</span></div>
-              <div class="pipeline-step-box"><span>9. Fault-Risk Classifier Inferred</span><span>✓</span></div>
-              <div class="pipeline-step-box"><span>10. Remaining Life Regressed</span><span>✓</span></div>
-              <div class="pipeline-step-box"><span>11. Diagnostic Ticket Saved to MySQL</span><span>✓</span></div>
+          <div class="row g-3">
+            <!-- Left: Live Mathematical Algorithm Execution & StandardScaler Physics -->
+            <div class="col-lg-6 border-end border-secondary">
+              <!-- Live Dynamic Algorithm Execution Card -->
+              <div class="d-flex align-items-center justify-content-between mb-2">
+                <strong class="text-white small d-flex align-items-center gap-2">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-cyan">
+                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                    <line x1="8" y1="21" x2="16" y2="21"></line>
+                    <line x1="12" y1="17" x2="12" y2="21"></line>
+                  </svg>
+                  Live Mathematical Decision Logic
+                </strong>
+                <span class="badge bg-secondary text-cyan small font-monospace" id="liveActiveModelBadge">Algorithm Engine Ready</span>
+              </div>
+
+              <!-- Dynamic Algorithm Logic Box (Populated authentically case-to-case) -->
+              <div id="resAlgoDynamicBox" class="ml-algo-card mb-3">
+                <div class="ml-algo-formula">f(x) = \text{argmax}_{c \in C} \sum_{t=1}^T \mathbb{I}(h_t(x) = c)</div>
+                <div class="text-secondary small p-2 text-center">
+                  <div class="text-light fw-medium mb-1">Awaiting Telemetry Ingestion</div>
+                  <div class="text-muted" style="font-size: 0.74rem;">Select motorcycle component and click Run Diagnostic Scan to view active algorithm decision path, voting distributions, margins, and distance matrices.</div>
+                </div>
+              </div>
+
+              <!-- StandardScaler Live Z-Score Deviations & Latent Space Projection -->
+              <div class="d-flex align-items-center justify-content-between mb-2">
+                <strong class="text-white small d-flex align-items-center gap-2">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-cyan">
+                    <path d="M3 3v18h18"></path>
+                    <path d="m19 9-5 5-4-4-3 3"></path>
+                  </svg>
+                  StandardScaler Deviations (z = [x - &mu;] / &sigma;)
+                </strong>
+                <span class="badge bg-secondary text-secondary small font-monospace" id="resPcaCoordBadge">PC1: -- | PC2: --</span>
+              </div>
+              <div id="resScalingMathBox" class="mb-3">
+                <div class="p-2 rounded bg-elevated border border-secondary text-muted small text-center" style="font-size: 0.74rem;">
+                  Physical telemetry will normalize against fitted training population statistics upon inference.
+                </div>
+              </div>
+
+              <!-- Primary Physical Drivers (Feature Decision Weights) -->
+              <div>
+                <div class="d-flex align-items-center justify-content-between mb-1">
+                  <strong class="text-white small">Primary Physical Drivers (Decision Weights)</strong>
+                  <span class="text-secondary small font-monospace" style="font-size: 0.7rem;">Relative Influence</span>
+                </div>
+                <div id="resFeatureImportanceBox" style="max-height: 160px; overflow-y: auto;">
+                  <span class="text-muted small">Mechanical sensor weights will calculate upon inference.</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right: Connected Pipeline Flow Stages & Live Execution Stream -->
+            <div class="col-lg-6">
+              <!-- Mechanical ML Inference Stream -->
+              <div class="d-flex align-items-center justify-content-between mb-2">
+                <strong class="text-white small d-flex align-items-center gap-2">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-cyan">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                  </svg>
+                  Mechanical ML Inference Stream
+                </strong>
+                <span class="badge bg-secondary text-secondary small" id="traceCountBadge">Awaiting Scan</span>
+              </div>
+
+              <!-- Stream Container: Clean Readable Cards with Mechanical Explanations -->
+              <div class="p-2 rounded bg-elevated border border-secondary mb-3" style="max-height: 180px; overflow-y: auto;" id="resTraceBox">
+                <div class="text-secondary small p-2 text-center">
+                  <div class="mb-1 text-light fw-medium">Ready for Mechanical Diagnosis</div>
+                  <div class="text-muted" style="font-size: 0.74rem;">Live sensor calibration, riding regime clustering, and wear regression explained step-by-step.</div>
+                </div>
+              </div>
+
+              <!-- Connected Pipeline Flow Stages (11 Steps with Human Mechanical Translations) -->
+              <div class="d-flex align-items-center justify-content-between mb-2">
+                <strong class="text-white small d-flex align-items-center gap-2">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-cyan">
+                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                  </svg>
+                  Automated Diagnostic Stepper
+                </strong>
+                <span class="badge bg-secondary text-cyan font-monospace" style="font-size: 0.68rem;">11 Synchronized Stages</span>
+              </div>
+
+              <div class="pipeline-flow-container" id="pipelineFlowContainer">
+                <div class="pipeline-step-box">
+                  <div class="pipeline-step-left">
+                    <span class="pipeline-step-num">1</span>
+                    <div class="pipeline-step-info">
+                      <span class="pipeline-step-title">Motorcycle Profile Retrieved</span>
+                      <span class="pipeline-step-desc">Identifies registered model, engine family & lifetime odometer</span>
+                    </div>
+                  </div>
+                  <span class="pipeline-step-status">Ready</span>
+                </div>
+
+                <div class="pipeline-step-box">
+                  <div class="pipeline-step-left">
+                    <span class="pipeline-step-num">2</span>
+                    <div class="pipeline-step-info">
+                      <span class="pipeline-step-title">OEM Technical Specs Loaded</span>
+                      <span class="pipeline-step-desc">Ingests factory displacement, cooling architecture & drive type</span>
+                    </div>
+                  </div>
+                  <span class="pipeline-step-status">Ready</span>
+                </div>
+
+                <div class="pipeline-step-box">
+                  <div class="pipeline-step-left">
+                    <span class="pipeline-step-num">3</span>
+                    <div class="pipeline-step-info">
+                      <span class="pipeline-step-title">Component Applicability Filtered</span>
+                      <span class="pipeline-step-desc">Confirms assembly compatibility (e.g. chain vs belt, disc vs drum)</span>
+                    </div>
+                  </div>
+                  <span class="pipeline-step-status">Ready</span>
+                </div>
+
+                <div class="pipeline-step-box">
+                  <div class="pipeline-step-left">
+                    <span class="pipeline-step-num">4</span>
+                    <div class="pipeline-step-info">
+                      <span class="pipeline-step-title">Live Sensor Telemetry Sampled</span>
+                      <span class="pipeline-step-desc">Samples real-time physical sensor stream at active timestamp</span>
+                    </div>
+                  </div>
+                  <span class="pipeline-step-status">Ready</span>
+                </div>
+
+                <div class="pipeline-step-box">
+                  <div class="pipeline-step-left">
+                    <span class="pipeline-step-num">5</span>
+                    <div class="pipeline-step-info">
+                      <span class="pipeline-step-title">14 Physical Metrics Extracted</span>
+                      <span class="pipeline-step-desc">Compiles heat, RPM, vibration harmonics & lining thickness</span>
+                    </div>
+                  </div>
+                  <span class="pipeline-step-status">Ready</span>
+                </div>
+
+                <div class="pipeline-step-box">
+                  <div class="pipeline-step-left">
+                    <span class="pipeline-step-num">6</span>
+                    <div class="pipeline-step-info">
+                      <span class="pipeline-step-title">StandardScaler Baseline Calibration</span>
+                      <span class="pipeline-step-desc">Calibrates readings against OEM baselines to account for weather</span>
+                    </div>
+                  </div>
+                  <span class="pipeline-step-status">Ready</span>
+                </div>
+
+                <div class="pipeline-step-box">
+                  <div class="pipeline-step-left">
+                    <span class="pipeline-step-num">7</span>
+                    <div class="pipeline-step-info">
+                      <span class="pipeline-step-title">Riding Regime Mapped (PCA & K-Means)</span>
+                      <span class="pipeline-step-desc">Classifies operating state (City Traffic vs Highway Cruise)</span>
+                    </div>
+                  </div>
+                  <span class="pipeline-step-status">Ready</span>
+                </div>
+
+                <div class="pipeline-step-box">
+                  <div class="pipeline-step-left">
+                    <span class="pipeline-step-num">8</span>
+                    <div class="pipeline-step-info">
+                      <span class="pipeline-step-title">Condition Classifier Executed</span>
+                      <span class="pipeline-step-desc">Evaluates wear patterns through trained decision trees</span>
+                    </div>
+                  </div>
+                  <span class="pipeline-step-status">Ready</span>
+                </div>
+
+                <div class="pipeline-step-box">
+                  <div class="pipeline-step-left">
+                    <span class="pipeline-step-num">9</span>
+                    <div class="pipeline-step-info">
+                      <span class="pipeline-step-title">Root-Cause Fault Isolated</span>
+                      <span class="pipeline-step-desc">Pinpoints specific mechanical anomaly (glazing, thinning, drag)</span>
+                    </div>
+                  </div>
+                  <span class="pipeline-step-status">Ready</span>
+                </div>
+
+                <div class="pipeline-step-box">
+                  <div class="pipeline-step-left">
+                    <span class="pipeline-step-num">10</span>
+                    <div class="pipeline-step-info">
+                      <span class="pipeline-step-title">Remaining Usable Life Regressed</span>
+                      <span class="pipeline-step-desc">Calculates safe operational distance (km) before replacement</span>
+                    </div>
+                  </div>
+                  <span class="pipeline-step-status">Ready</span>
+                </div>
+
+                <div class="pipeline-step-box">
+                  <div class="pipeline-step-left">
+                    <span class="pipeline-step-num">11</span>
+                    <div class="pipeline-step-info">
+                      <span class="pipeline-step-title">Diagnostic Ticket Saved to MySQL</span>
+                      <span class="pipeline-step-desc">Stores permanent maintenance record for future wear trends</span>
+                    </div>
+                  </div>
+                  <span class="pipeline-step-status">Ready</span>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
         </div>
       </div>
 
@@ -222,10 +427,20 @@
             </div>
           </div>
 
-          <!-- Detailed Supporting Mechanical Reason -->
-          <div class="mb-4">
-            <strong class="text-white small mb-1 d-block">Technical Recommendation & Justification:</strong>
-            <p class="text-light small" id="resReason">Reasoning</p>
+          <!-- Case-by-Case Technical Recommendation & Justification Section -->
+          <div class="mb-4" id="recommendationPanel">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <strong class="text-white small d-block">Technical Recommendation & Mechanical Justification:</strong>
+              <span class="badge bg-secondary font-monospace" id="resRecModeBadge" style="font-size: 0.7rem;">Case-Specific Analysis</span>
+            </div>
+
+            <!-- Dynamic Structured Recommendations Container -->
+            <div id="resStructuredRecommendations" class="d-flex flex-column gap-3">
+              <!-- Dynamically populated via diagnostics.js -->
+            </div>
+
+            <!-- Hidden fallback text element for backward compatibility -->
+            <p class="text-light small mt-2 d-none" id="resReason">Reasoning</p>
           </div>
 
           <!-- Actions -->

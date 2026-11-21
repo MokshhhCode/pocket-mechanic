@@ -49,7 +49,7 @@ def index():
 
     source_mode = get_active_mode(current_user.id)
     intensity = get_simulation_intensity(current_user.id)
-    telemetry_packet = fetch_telemetry_for_motorcycle(bike_id, persist=False)
+    telemetry_packet = fetch_telemetry_for_motorcycle(bike_id, intensity_override=intensity, persist=False, user_id=current_user.id)
 
     return render_template(
         'telemetry/live.html',
@@ -68,5 +68,12 @@ def get_live_stream():
     if not bike_id:
         return jsonify({"error": "No active motorcycle selected"}), 400
 
-    telemetry = fetch_telemetry_for_motorcycle(bike_id, persist=True)
+    from flask import request
+    intensity_param = request.args.get('intensity')
+    telemetry = fetch_telemetry_for_motorcycle(
+        bike_id,
+        intensity_override=intensity_param,
+        persist=True,
+        user_id=current_user.id
+    )
     return jsonify(telemetry)

@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, jsonify, session
+from flask import Blueprint, render_template, request, jsonify, session, redirect, url_for
 from flask_login import login_required, current_user
 from database.connection import get_db_connection
 from modules.wrenchy.service import WrenchyAIService
@@ -43,6 +43,11 @@ def index():
             conversations = cursor.fetchall()
     finally:
         conn.close()
+
+    # If user explicitly requested a brand-new consultation, generate a fresh conversation ID and redirect
+    if request.args.get('new') == '1':
+        new_conv_id = WrenchyAIService.get_or_create_conversation(current_user.id, bike_id, conversation_id=None)
+        return redirect(url_for('wrenchy.index', conv_id=new_conv_id))
 
     conv_id = request.args.get('conv_id')
     if not conv_id and conversations:

@@ -38,6 +38,7 @@ env/
 *.log
 desktop_app.log
 Pocket Mechanic.app/desktop_app.log
+scratch/
 
 # Operating System Files
 .DS_Store

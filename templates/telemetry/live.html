@@ -13,9 +13,17 @@
         Continuous Stream Ingestion • Dynamic Tolerance Verification • Stage 1 Simulated Data Source
       </p>
     </div>
-    <div class="d-flex align-items-center gap-2">
-      <span class="badge {% if source_mode == 'SIMULATOR' %}bg-primary{% else %}bg-secondary{% endif %} font-monospace">
-        Source: {{ source_mode }} ({{ intensity }})
+    <div class="d-flex flex-wrap align-items-center gap-2">
+      <div class="d-flex align-items-center gap-2 bg-elevated border border-secondary rounded px-2 py-1">
+        <label for="telemetryIntensitySelect" class="text-secondary small mb-0 fw-medium" style="font-size: 0.75rem;">Simulation Intensity:</label>
+        <select id="telemetryIntensitySelect" class="form-select form-select-sm bg-dark text-white border-secondary py-0 px-2" style="font-size: 0.75rem; width: auto; height: 26px;">
+          <option value="REGULAR" {% if intensity == 'Regular' %}selected{% endif %}>Regular (Nominal)</option>
+          <option value="MEDIUM" {% if intensity == 'Medium' %}selected{% endif %}>Medium (High Stress)</option>
+          <option value="INTENSE" {% if intensity == 'Intense' %}selected{% endif %}>Intense (Fault State)</option>
+        </select>
+      </div>
+      <span class="badge {% if source_mode == 'SIMULATOR' %}bg-primary{% else %}bg-secondary{% endif %} font-monospace" id="telemetrySourceBadge">
+        Source: {{ source_mode }} (<span id="telemetryIntensityDisplay">{{ intensity }}</span>)
       </span>
       <span class="badge bg-secondary font-monospace" id="telemetryOverallStatus">
         {{ telemetry.status }}

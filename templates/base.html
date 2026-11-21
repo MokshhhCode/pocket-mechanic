@@ -5,8 +5,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}Pocket Mechanic — Intelligent Motorcycle Diagnostics{% endblock %}</title>
 
+  <!-- Immediate Client-Side Theme Application (Zero-Flicker Pre-Render Guard) -->
+  <script>
+    (function() {
+      try {
+        var t = localStorage.getItem('pm_theme');
+        if (!t) {
+          var m = document.cookie.match(/(?:^|;\s*)pm_theme=([^;]+)/);
+          if (m) t = m[1];
+        }
+        if (t === 'light' || t === 'dark') {
+          document.documentElement.setAttribute('data-theme', t);
+          document.documentElement.setAttribute('data-bs-theme', t);
+        }
+      } catch (e) {}
+    })();
+  </script>
+
   <!-- Local Favicon with Authentic Wrenchy Brand -->
-  <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/favicon.png') }}">
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='images/wrenchy_brand.svg') }}?v=3">
+  <link rel="alternate icon" type="image/png" href="{{ url_for('static', filename='images/favicon.png') }}?v=3">
 
   <!-- Local Vendored Bootstrap 5 CSS (100% Offline, Zero CDN) -->
   <link rel="stylesheet" href="{{ url_for('static', filename='vendor/bootstrap/css/bootstrap.min.css') }}">
@@ -15,7 +33,9 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/wrenchy.css') }}">
 </head>
 <body class="pm-app-body">
+{% set is_public_page = (not current_user.is_authenticated) or (request.endpoint in ['dashboard.welcome', 'auth.login', 'auth.register']) %}
 
+{% if not is_public_page %}
   <div class="pm-app-shell">
     <!-- ==================================================================== -->
     <!-- LEFT PERSISTENT SIDEBAR NAVIGATION (Notion-Style Hierarchy)          -->
@@ -24,8 +44,40 @@
       <div class="pm-sidebar-top">
         <!-- macOS Window Header & Static Software Brand Logo -->
         <div class="pm-sidebar-brand-wrapper">
-          <a href="{{ url_for('dashboard.home' if current_user.is_authenticated else 'dashboard.welcome') }}" class="pm-sidebar-brand text-decoration-none">
-            <img src="{{ url_for('static', filename='images/wrenchy_brand.png') }}" class="pm-sidebar-logo" alt="Pocket Mechanic Logo">
+          <a href="{{ url_for('dashboard.home' if current_user.is_authenticated else 'dashboard.welcome') }}" class="pm-sidebar-brand text-decoration-none" title="Pocket Mechanic — Powered by Wrenchy">
+            <svg class="pm-sidebar-logo" viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Wrenchy — Official Software Logo">
+              <defs>
+                <linearGradient id="wrenchChromeSide" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#94a3b8" />
+                  <stop offset="50%" stop-color="#cbd5e1" />
+                  <stop offset="100%" stop-color="#64748b" />
+                </linearGradient>
+                <linearGradient id="wrenchEyeSide" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#38bdf8" />
+                  <stop offset="100%" stop-color="#0284c7" />
+                </linearGradient>
+              </defs>
+              <rect x="36" y="96" width="8" height="16" rx="4" fill="#475569" />
+              <rect x="56" y="96" width="8" height="16" rx="4" fill="#475569" />
+              <ellipse cx="38" cy="112" rx="7" ry="4" fill="#1e293b" />
+              <ellipse cx="62" cy="112" rx="7" ry="4" fill="#1e293b" />
+              <path d="M 28 52 Q 14 58 12 70" stroke="#64748b" stroke-width="6" stroke-linecap="round" fill="none" />
+              <circle cx="12" cy="71" r="5" fill="#94a3b8" />
+              <path d="M 72 52 Q 86 52 88 40" stroke="#64748b" stroke-width="6" stroke-linecap="round" fill="none" />
+              <circle cx="89" cy="38" r="5" fill="#94a3b8" />
+              <path d="M 32 18 C 32 6 42 2 50 2 C 58 2 68 6 68 18 C 68 25 64 30 60 33 L 60 92 C 60 96 55 98 50 98 C 45 98 40 96 40 92 L 40 33 C 36 30 32 25 32 18 Z"
+                    fill="url(#wrenchChromeSide)" stroke="#334155" stroke-width="2.5" />
+              <path d="M 42 2 L 50 14 L 58 2 Z" fill="#0f172a" />
+              <ellipse cx="44" cy="42" rx="4.5" ry="5.5" fill="#0f172a" />
+              <ellipse cx="56" cy="42" rx="4.5" ry="5.5" fill="#0f172a" />
+              <circle cx="45" cy="40.5" r="1.8" fill="url(#wrenchEyeSide)" />
+              <circle cx="57" cy="40.5" r="1.8" fill="url(#wrenchEyeSide)" />
+              <circle cx="43.5" cy="39.5" r="0.8" fill="#ffffff" />
+              <circle cx="55.5" cy="39.5" r="0.8" fill="#ffffff" />
+              <ellipse cx="40" cy="48" rx="2.8" ry="1.6" fill="rgba(244, 63, 94, 0.65)" />
+              <ellipse cx="60" cy="48" rx="2.8" ry="1.6" fill="rgba(244, 63, 94, 0.65)" />
+              <path d="M 45 50 Q 50 56 55 50" stroke="#0f172a" stroke-width="2.5" stroke-linecap="round" fill="none" />
+            </svg>
             <div class="pm-sidebar-brand-meta">
               <span class="pm-brand-name">Pocket Mechanic</span>
               <span class="pm-brand-badge">macOS • Local</span>
@@ -145,12 +197,30 @@
             <span>Wrenchy AI Assistant</span>
           </a>
           {% else %}
-          <div class="pm-nav-group-label">WELCOME</div>
-          <a href="{{ url_for('dashboard.welcome') }}" class="pm-nav-item active">
+          <!-- SECTION: UNREGISTERED / SIGN IN -->
+          <div class="pm-nav-group-label">GET STARTED</div>
+          <a href="{{ url_for('dashboard.welcome') }}" class="pm-nav-item {% if request.endpoint == 'dashboard.welcome' %}active{% endif %}">
             <svg class="pm-nav-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
             </svg>
-            <span>Welcome & Setup</span>
+            <span>Welcome & Landing</span>
+          </a>
+          <a href="{{ url_for('auth.login') }}" class="pm-nav-item {% if request.endpoint == 'auth.login' %}active{% endif %}">
+            <svg class="pm-nav-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+              <polyline points="10 17 15 12 10 7"></polyline>
+              <line x1="15" y1="12" x2="3" y2="12"></line>
+            </svg>
+            <span>Sign In</span>
+          </a>
+          <a href="{{ url_for('auth.register') }}" class="pm-nav-item {% if request.endpoint == 'auth.register' %}active{% endif %}">
+            <svg class="pm-nav-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="8.5" cy="7" r="4"></circle>
+              <line x1="20" y1="8" x2="20" y2="14"></line>
+              <line x1="23" y1="11" x2="17" y2="11"></line>
+            </svg>
+            <span>Register New Rider</span>
           </a>
           {% endif %}
         </nav>
@@ -180,8 +250,8 @@
             <div class="pm-profile-name text-truncate">{{ current_user.full_name }}</div>
             <div class="pm-profile-sub">Local Rider Profile</div>
           </div>
-          <a href="{{ url_for('auth.logout') }}" class="pm-profile-logout-btn" title="Sign Out / Switch Rider" aria-label="Sign out">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <a href="{{ url_for('auth.logout') }}" class="pm-profile-logout-btn" title="Sign Out of Pocket Mechanic" aria-label="Sign out">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
               <polyline points="16 17 21 12 16 7"></polyline>
               <line x1="21" y1="12" x2="9" y2="12"></line>
@@ -189,9 +259,24 @@
           </a>
         </div>
         {% else %}
-        <div class="p-2">
-          <a href="{{ url_for('auth.login') }}" class="btn btn-sm btn-pm-secondary w-100 mb-1">Sign In</a>
-          <a href="{{ url_for('auth.register') }}" class="btn btn-sm btn-pm-primary w-100">Setup Profile</a>
+        <div class="p-3 border-top border-secondary">
+          <a href="{{ url_for('auth.login') }}" class="btn btn-sm btn-pm-primary w-100 mb-2 d-flex align-items-center justify-content-center gap-2">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+              <polyline points="10 17 15 12 10 7"></polyline>
+              <line x1="15" y1="12" x2="3" y2="12"></line>
+            </svg>
+            <span>Sign In</span>
+          </a>
+          <a href="{{ url_for('auth.register') }}" class="btn btn-sm btn-pm-secondary w-100 d-flex align-items-center justify-content-center gap-2">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="8.5" cy="7" r="4"></circle>
+              <line x1="20" y1="8" x2="20" y2="14"></line>
+              <line x1="23" y1="11" x2="17" y2="11"></line>
+            </svg>
+            <span>Register Profile</span>
+          </a>
         </div>
         {% endif %}
       </div>
@@ -231,7 +316,72 @@
 
       <!-- Page Content Block -->
       <div class="pm-main-canvas">
-        {% block content %}{% endblock %}
+{% else %}
+  <!-- ====================================================================== -->
+  <!-- STANDALONE PUBLIC / AUTH / LANDING SHELL (Dashboard is 100% Locked)    -->
+  <!-- ====================================================================== -->
+  <div class="pm-public-shell">
+    <!-- Public Minimal Header with Brand Logo & Theme Toggle -->
+    <header class="pm-public-header">
+      <a href="{{ url_for('dashboard.welcome') }}" class="d-flex align-items-center gap-2 text-decoration-none" title="Pocket Mechanic">
+        <img src="{{ url_for('static', filename='images/wrenchy_brand.svg') }}?v=4" alt="Pocket Mechanic" style="width: 28px; height: 34px; object-fit: contain;">
+        <span class="text-white fw-bold font-monospace" style="letter-spacing: 0.5px;">POCKET MECHANIC</span>
+      </a>
+      <div class="d-flex align-items-center gap-2">
+        {% if current_user.is_authenticated %}
+          <a href="{{ url_for('dashboard.home') }}" class="btn btn-sm btn-pm-primary">
+            Enter Garage Dashboard &rarr;
+          </a>
+          <a href="{{ url_for('auth.logout') }}" class="btn btn-sm btn-pm-secondary">
+            Sign Out
+          </a>
+        {% else %}
+          {% if request.endpoint != 'dashboard.welcome' %}
+            <a href="{{ url_for('dashboard.welcome') }}" class="btn btn-sm btn-pm-secondary d-none d-sm-inline-flex">
+              Home
+            </a>
+          {% endif %}
+          {% if request.endpoint != 'auth.login' %}
+            <a href="{{ url_for('auth.login') }}" class="btn btn-sm btn-pm-primary">
+              Sign In
+            </a>
+          {% endif %}
+          {% if request.endpoint != 'auth.register' %}
+            <a href="{{ url_for('auth.register') }}" class="btn btn-sm btn-pm-secondary">
+              Register New Rider
+            </a>
+          {% endif %}
+        {% endif %}
+        <!-- Quick Theme Toggle -->
+        <button class="pm-theme-toggle-btn ms-1" title="Toggle Light/Dark Mode" aria-label="Toggle Theme">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Public Main Canvas (Centered Landing / Login / Register) -->
+    <div class="pm-public-content">
+{% endif %}
+
+      <!-- System Notification & Flash Alerts -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="{% if is_public_page %}container px-3 mb-3" style="max-width: 620px;{% else %}container-fluid px-3 pt-3{% endif %}">
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category if category != 'error' else 'danger' }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+
+      {% block content %}{% endblock %}
+
+{% if not is_public_page %}
       </div>
     </main>
   </div>
@@ -310,18 +460,18 @@
   <aside class="wrenchy-modal" id="wrenchyChatModal" style="display: none;" aria-label="Wrenchy Chat Dialog">
     <div class="wrenchy-modal-header">
       <div class="d-flex align-items-center gap-2">
-        <img src="{{ url_for('static', filename='images/wrenchy_brand.png') }}" style="width: 20px; height: 20px; object-fit: contain;" alt="Wrenchy">
+        <img src="{{ url_for('static', filename='images/wrenchy_brand.svg') }}?v=3" style="width: 20px; height: 20px; object-fit: contain;" alt="Wrenchy">
         <strong class="pm-modal-title small">Wrenchy AI Motorcycle Assistant</strong>
       </div>
       <button class="btn-close btn-close-white" id="wrenchyCloseModalBtn" aria-label="Close Wrenchy Chat"></button>
     </div>
     <div class="wrenchy-messages-box" id="wrenchyMessagesBox">
       <div class="wrenchy-msg assistant">
-        Hello {{ current_user.full_name }}! I'm Wrenchy, your motorcycle mechanic. What would you like to inspect, diagnose, or check today?
+        Hey {{ current_user.full_name.split()[0] if current_user.full_name else 'Rider' }}! I'm Wrenchy, your motorcycle companion & master mechanic. What's on your mind today? Whether it's diagnosing a weird noise, road trip prep, riding gear tips, or everyday bike talk, I'm here for it!
       </div>
     </div>
     <div class="wrenchy-modal-footer">
-      <input type="text" id="wrenchyInput" class="form-control form-control-sm pm-input" placeholder="Ask Wrenchy about sounds, specs, faults...">
+      <input type="text" id="wrenchyInput" class="form-control form-control-sm pm-input" placeholder="Ask Wrenchy anything about bikes, maintenance, or riding...">
       <button class="btn btn-sm btn-pm-primary" id="wrenchySendBtn" aria-label="Send message to Wrenchy">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <line x1="22" y1="2" x2="11" y2="13"></line>
@@ -379,6 +529,10 @@
     </div>
   </div>
   {% endif %}
+{% else %}
+    </div>
+  </div>
+{% endif %}
 
   <!-- Local Vendored Bootstrap 5 JS Bundle (100% Offline, Zero CDN) -->
   <script src="{{ url_for('static', filename='vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
@@ -387,23 +541,43 @@
   <script src="{{ url_for('static', filename='js/wrenchy.js') }}"></script>
 
   <script>
-  // Topbar quick theme toggle listener (updates both data-theme and data-bs-theme)
-  const topThemeBtn = document.getElementById('pmThemeToggleBtn');
-  if (topThemeBtn) {
-    topThemeBtn.addEventListener('click', async () => {
+  // Unified Global Theme Switcher with multi-layer persistence (DOM + localStorage + cookie + MySQL backend)
+  window.setPocketMechanicTheme = function(theme) {
+    const t = (theme || 'dark').toLowerCase();
+    document.documentElement.setAttribute('data-theme', t);
+    document.documentElement.setAttribute('data-bs-theme', t);
+    try {
+      localStorage.setItem('pm_theme', t);
+    } catch (e) {}
+    document.cookie = 'pm_theme=' + t + '; path=/; max-age=31536000; SameSite=Lax';
+
+    // Synchronize developer toolbar toggle if present
+    const devToggle = document.getElementById('devThemeToggle');
+    if (devToggle) devToggle.checked = (t === 'light');
+
+    // Synchronize settings view dropdown if present
+    const settingSelect = document.getElementById('settingTheme');
+    if (settingSelect) settingSelect.value = t.toUpperCase();
+
+    // Persist to Flask session and MySQL database
+    return fetch('/api/settings/update', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key: 'THEME_MODE', value: t.toUpperCase() })
+    }).catch(function(err) {
+      console.warn('Backend theme sync note:', err);
+    });
+  };
+
+  // Topbar quick theme toggle listener (supports both public & authenticated bars)
+  document.querySelectorAll('.pm-theme-toggle-btn').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
       const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
       const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-      document.documentElement.setAttribute('data-theme', newTheme);
-      document.documentElement.setAttribute('data-bs-theme', newTheme);
-      try {
-        await fetch('/api/settings/update', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ key: 'THEME_MODE', value: newTheme.toUpperCase() })
-        });
-      } catch (e) {}
+      window.setPocketMechanicTheme(newTheme);
     });
-  }
+  });
   </script>
 
   {% block scripts %}{% endblock %}

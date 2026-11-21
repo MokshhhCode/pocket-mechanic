@@ -10,7 +10,20 @@ auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for('dashboard.home'))
+        if request.args.get('switch') == '1':
+            theme = session.get('THEME_MODE') or request.cookies.get('pm_theme', '').upper() or 'DARK'
+            if theme not in ('LIGHT', 'DARK'):
+                theme = 'DARK'
+            logout_user()
+            session.clear()
+            session['THEME_MODE'] = theme
+            session['logged_out'] = True
+            session['_remember'] = 'clear'
+            resp = redirect(url_for('auth.login'))
+            resp.delete_cookie('remember_token', path='/')
+            return resp
+        else:
+            return redirect(url_for('dashboard.home'))
 
     if request.method == 'POST':
         email = request.form.get('email', '').strip().lower()
@@ -35,6 +48,7 @@ def login():
             user_row['licence_last4']
         )
         login_user(user, remember=True)
+        session.pop('logged_out', None)
 
         # Update last login timestamp in MySQL
         conn = get_db_connection()
@@ -63,7 +77,12 @@ def login():
 @auth_bp.route('/register', methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
-        return redirect(url_for('dashboard.home'))
+        if request.args.get('new') == '1':
+            logout_user()
+            session.clear()
+            session['logged_out'] = True
+        else:
+            return redirect(url_for('dashboard.home'))
 
     if request.method == 'POST':
         # Part A: User Details
@@ -157,11 +176,15 @@ def register():
                 )
                 bike_id = cursor.lastrowid
 
-                # 4. Insert Default User Settings
+                # 4. Insert Default User Settings (Respect active theme preference)
+                active_reg_theme = session.get('THEME_MODE') or request.cookies.get('pm_theme', '').upper() or 'DARK'
+                if active_reg_theme not in ('LIGHT', 'DARK'):
+                    active_reg_theme = 'DARK'
+
                 settings = [
                     (user_id, "DATA_SOURCE_MODE", "SIMULATOR"),
                     (user_id, "SIMULATION_INTENSITY", "REGULAR"),
-                    (user_id, "THEME_MODE", "DARK"),
+                    (user_id, "THEME_MODE", active_reg_theme),
                     (user_id, "LIVE_ML_DIAGNOSTICS", "ON")
                 ]
                 cursor.executemany(
@@ -174,9 +197,13 @@ def register():
             # Auto-login newly registered user
             user = User(user_id, full_name, email, city, state, encrypted_licence_val, licence_last4_val)
             login_user(user)
+            session.pop('logged_out', None)
             session['active_motorcycle_id'] = bike_id
+            session['THEME_MODE'] = active_reg_theme
             flash("Registration complete! Welcome to Pocket Mechanic.", "success")
-            return redirect(url_for('dashboard.home'))
+            resp = redirect(url_for('dashboard.home'))
+            resp.set_cookie('pm_theme', active_reg_theme.lower(), max_age=31536000, samesite='Lax', path='/')
+            return resp
 
         except Exception as e:
             flash(f"Registration failed due to a database error: {e}", "danger")
@@ -196,11 +223,23 @@ def register():
     return render_template('auth/register.html', manufacturers=manufacturers)
 
 @auth_bp.route('/logout')
-@login_required
 def logout():
-    uid = current_user.id
-    log_audit(uid, "USER_LOGOUT", "users", uid)
-    logout_user()
+    # Capture current theme preference before clearing session
+    theme = session.get('THEME_MODE') or request.cookies.get('pm_theme', '').upper() or 'DARK'
+    if theme not in ('LIGHT', 'DARK'):
+        theme = 'DARK'
+
+    if current_user.is_authenticated:
+        uid = current_user.id
+        log_audit(uid, "USER_LOGOUT", "users", uid)
+        logout_user()
+
     session.clear()
-    flash("You have been signed out safely.", "info")
-    return redirect(url_for('dashboard.welcome'))
+    session['THEME_MODE'] = theme
+    session['logged_out'] = True
+    session['_remember'] = 'clear'
+    flash("You have been signed out safely. Welcome to Pocket Mechanic.", "info")
+    resp = redirect(url_for('dashboard.welcome'))
+    resp.set_cookie('pm_theme', theme.lower(), max_age=31536000, samesite='Lax', path='/')
+    resp.delete_cookie('remember_token', path='/')
+    return resp

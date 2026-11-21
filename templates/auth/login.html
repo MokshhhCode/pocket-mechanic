@@ -6,8 +6,8 @@
 <div class="container py-5 d-flex align-items-center justify-content-center min-vh-75">
   <div class="pm-card shadow-lg p-4 p-md-5" style="max-width: 440px; width: 100%;">
     <div class="text-center mb-4">
-      <div class="mx-auto mb-3" style="width: 48px; height: 48px;">
-        <img src="{{ url_for('static', filename='images/wrenchy_brand.png') }}" style="width: 48px; height: 48px; object-fit: contain;" alt="Pocket Mechanic">
+      <div class="mx-auto mb-3" style="width: 72px; height: 86px;">
+        <img src="{{ url_for('static', filename='images/wrenchy_brand.svg') }}?v=4" style="width: 72px; height: 86px; object-fit: contain; filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.45));" alt="Wrenchy — Official Software Logo">
       </div>
       <h2 class="fs-4 fw-bold text-white mb-1">Rider Authentication</h2>
       <p class="text-secondary small mb-1">Access vehicle profiles, live diagnostics, and telemetry.</p>
@@ -31,9 +31,18 @@
         Sign In to Pocket Mechanic
       </button>
 
-      <div class="text-center text-secondary small">
+      <div class="text-center text-secondary small mb-3">
         Don't have an account?
         <a href="{{ url_for('auth.register') }}" class="text-cyan text-decoration-none fw-medium ms-1">Register here</a>
+      </div>
+
+      <div class="text-center pt-2 border-top border-secondary">
+        <a href="{{ url_for('dashboard.welcome') }}" class="text-secondary small text-decoration-none d-inline-flex align-items-center gap-1">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+          <span>Return to Welcome Screen</span>
+        </a>
       </div>
     </form>
   </div>

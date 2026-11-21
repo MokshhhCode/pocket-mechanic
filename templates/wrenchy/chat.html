@@ -8,13 +8,13 @@
     <div class="pm-page-pretitle">INTELLIGENT CONVERSATION</div>
     <h1 class="pm-page-title">Wrenchy AI Motorcycle Assistant</h1>
     <p class="pm-page-desc">
-      Context-aware diagnostic consultation with knowledge of {{ current_bike.mfg_name }} {{ current_bike.model_name }} specifications, maintenance intervals, and telemetry.
+      Your conversational motorcycle companion & master mechanic. Talk freely about mechanical diagnostics, road trip planning, riding techniques, gear recommendations, or verified {{ current_bike.mfg_name }} {{ current_bike.model_name }} factory specifications.
     </p>
   </div>
   <div class="pm-page-header-actions">
     <span class="pm-pill pm-pill-active">
       <span class="indicator-dot indicator-green"></span>
-      Online Diagnostic Assistant
+      Conversational AI Mechanic
     </span>
   </div>
 </div>
@@ -37,7 +37,7 @@
           {% endfor %}
         </div>
         <div class="p-3 border-top border-secondary text-center">
-          <a href="{{ url_for('wrenchy.index') }}" class="btn btn-sm btn-pm-secondary w-100">
+          <a href="{{ url_for('wrenchy.index', new=1) }}" class="btn btn-sm btn-pm-secondary w-100">
             + New Consultation
           </a>
         </div>
@@ -49,7 +49,7 @@
       <div class="pm-card d-flex flex-column" style="height: 580px;">
         <div class="pm-card-header pb-2">
           <div class="d-flex align-items-center gap-2">
-            <img src="{{ url_for('static', filename='images/wrenchy_brand.png') }}" style="width: 22px; height: 22px; object-fit: contain;" alt="Wrenchy">
+            <img src="{{ url_for('static', filename='images/wrenchy_brand.svg') }}?v=3" style="width: 24px; height: 24px; object-fit: contain;" alt="Wrenchy">
             <span class="fw-bold text-white small">Live Session with Wrenchy</span>
           </div>
           <span class="text-secondary small font-monospace">Session: {{ active_conv_id }}</span>
@@ -57,6 +57,12 @@
 
         <!-- Chat History Box -->
         <div class="flex-grow-1 overflow-auto p-3 d-flex flex-column gap-3" id="mainChatBox">
+          {% if not history %}
+          <div class="wrenchy-msg assistant">
+            Hey {{ current_user.full_name.split()[0] if current_user.full_name else 'Rider' }}! I've opened a fresh consultation session for your <strong>{{ current_bike.mfg_name if current_bike else '' }} {{ current_bike.model_name if current_bike else 'motorcycle' }}</strong>.<br><br>
+            What's on your mind today? Whether it's custom modifications, road trip prep, weird noises, riding dynamics, or verified specs, just type below!
+          </div>
+          {% endif %}
           {% for msg in history %}
           <div class="wrenchy-msg {{ 'user' if msg.sender == 'USER' else 'assistant' }}">
             {{ msg.message_text | replace('\n', '<br>') | safe }}
@@ -67,7 +73,7 @@
         <!-- Input Bar -->
         <div class="p-3 border-top border-secondary bg-transparent">
           <div class="input-group">
-            <input type="text" id="fullChatInput" class="pm-input" placeholder="Ask Wrenchy about symptoms, unusual sounds, specs, or maintenance...">
+            <input type="text" id="fullChatInput" class="pm-input" placeholder="Ask Wrenchy anything: road trip packing, riding techniques, maintenance, engine advice, or everyday questions...">
             <button class="btn btn-pm-primary px-4 ms-2" id="fullChatSendBtn">
               Send Query &rarr;
             </button>
@@ -96,6 +102,11 @@ document.addEventListener("DOMContentLoaded", function() {
 
     append(text, "user");
     input.value = "";
+    input.disabled = true;
+    sendBtn.disabled = true;
+    sendBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Thinking...`;
+
+    showLoadingIndicator();
 
     fetch("/api/wrenchy/chat", {
       method: "POST",
@@ -104,13 +115,49 @@ document.addEventListener("DOMContentLoaded", function() {
     })
     .then(r => r.json())
     .then(data => {
+      removeLoadingIndicator();
+      input.disabled = false;
+      sendBtn.disabled = false;
+      sendBtn.innerHTML = `Send Query &rarr;`;
+      input.focus();
+
       if (data.reply) {
         append(data.reply, "assistant", data.suggested_action);
+      } else if (data.error) {
+        append(`Error: ${data.error}`, "assistant");
       }
     })
     .catch(err => {
-      append("Communication error.", "assistant");
+      removeLoadingIndicator();
+      input.disabled = false;
+      sendBtn.disabled = false;
+      sendBtn.innerHTML = `Send Query &rarr;`;
+      input.focus();
+      append("Sorry, I encountered a communication issue. Please try sending your query again.", "assistant");
     });
+  }
+
+  function showLoadingIndicator() {
+    removeLoadingIndicator();
+    const loadingDiv = document.createElement("div");
+    loadingDiv.id = "wrenchyThinkingBubble";
+    loadingDiv.className = "wrenchy-msg assistant d-flex align-items-center gap-2";
+    loadingDiv.innerHTML = `
+      <div class="spinner-border spinner-border-sm text-cyan" role="status" style="width: 1.05rem; height: 1.05rem; border-width: 2px;"></div>
+      <div class="wrenchy-thinking-dots me-1">
+        <span class="dot"></span>
+        <span class="dot"></span>
+        <span class="dot"></span>
+      </div>
+      <span class="text-secondary small fst-italic">Wrenchy is thinking & checking specs...</span>
+    `;
+    box.appendChild(loadingDiv);
+    box.scrollTop = box.scrollHeight;
+  }
+
+  function removeLoadingIndicator() {
+    const el = document.getElementById("wrenchyThinkingBubble");
+    if (el) el.remove();
   }
 
   function append(text, sender, action) {

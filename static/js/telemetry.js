@@ -11,12 +11,41 @@ class TelemetryMonitor {
   }
 
   init() {
+    this.initIntensityControl();
     this.poll();
     this.timer = setInterval(() => this.poll(), this.pollInterval);
   }
 
+  initIntensityControl() {
+    const sel = document.getElementById("telemetryIntensitySelect");
+    if (sel) {
+      sel.addEventListener("change", (e) => {
+        const newInt = e.target.value;
+        const disp = document.getElementById("telemetryIntensityDisplay");
+        if (disp) {
+          disp.innerText = newInt.charAt(0).toUpperCase() + newInt.slice(1).toLowerCase();
+        }
+
+        // Persist to user settings via API
+        fetch("/api/settings/update", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ key: "SIMULATION_INTENSITY", value: newInt })
+        })
+          .then((r) => r.json())
+          .then(() => {
+            // Immediately re-poll to update gauges without waiting for next timer interval
+            this.poll();
+          })
+          .catch((err) => console.error("Failed to update simulation intensity:", err));
+      });
+    }
+  }
+
   poll() {
-    fetch("/api/telemetry/live")
+    const sel = document.getElementById("telemetryIntensitySelect");
+    const intensityQuery = sel ? `?intensity=${sel.value}` : "";
+    fetch(`/api/telemetry/live${intensityQuery}`)
       .then((r) => r.json())
       .then((packet) => {
         if (packet.readings) {

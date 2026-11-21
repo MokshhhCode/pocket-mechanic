@@ -116,7 +116,7 @@ def execute_diagnosis():
     component_code = data.get('component_code', '').strip()
     problem_desc = data.get('problem_description', '').strip() or "Routine holistic diagnostic scan"
     category = data.get('problem_category', 'General Performance')
-    selected_model = data.get('model_name', 'Random_Forest')
+    selected_model = data.get('model_name') or data.get('model_override') or data.get('model') or 'Random_Forest'
 
     session_id = f"diag_{uuid.uuid4().hex[:12]}"
 
@@ -183,7 +183,8 @@ def execute_diagnosis():
         motorcycle_id=bike_id,
         ml_result=ml_result,
         telemetry=telemetry,
-        component_code=component_code
+        component_code=component_code,
+        user_symptoms=problem_desc
     )
 
     # Step 5: Save Diagnostic Ticket & Result in MySQL
@@ -250,6 +251,9 @@ def execute_diagnosis():
         "recommended_action": rec_result.get("recommended_action"),
         "supporting_reason": rec_result.get("supporting_reason"),
         "immediate_inspection_required": rec_result.get("immediate_inspection_required"),
+        "whats_right": rec_result.get("whats_right", []),
+        "whats_wrong": rec_result.get("whats_wrong", []),
+        "primary_issue": rec_result.get("primary_issue"),
         "ml_engine": {
             "model_selected": ml_result.get("model_used"),
             "confidence_pct": ml_result.get("confidence_pct"),
@@ -259,7 +263,11 @@ def execute_diagnosis():
             "pca_coordinates": ml_result.get("pca_coordinates"),
             "cluster_id": ml_result.get("cluster_id"),
             "feature_importance": ml_result.get("feature_importance"),
-            "live_trace": ml_result.get("live_trace")
+            "live_trace": ml_result.get("live_trace"),
+            "scaling_math": ml_result.get("scaling_math", []),
+            "pca_math": ml_result.get("pca_math", {}),
+            "clustering_math": ml_result.get("clustering_math", {}),
+            "algorithm_math": ml_result.get("algorithm_math", {})
         },
         "telemetry_snapshot": readings,
         "anomalies_detected": telemetry.get("anomalies", []),

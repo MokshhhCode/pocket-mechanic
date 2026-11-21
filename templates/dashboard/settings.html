@@ -290,12 +290,19 @@ document.addEventListener('DOMContentLoaded', () => {
         await Promise.all([
           fetch('/api/settings/update', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: 'DATA_SOURCE_MODE', value: srcMode }) }),
           fetch('/api/settings/update', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: 'SIMULATION_INTENSITY', value: simInt }) }),
-          fetch('/api/settings/update', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: 'THEME_MODE', value: theme }) }),
           fetch('/api/settings/update', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: 'LIVE_ML_DIAGNOSTICS', value: liveMl }) })
         ]);
 
-        document.documentElement.setAttribute('data-theme', theme.toLowerCase());
-        document.documentElement.setAttribute('data-bs-theme', theme.toLowerCase());
+        if (typeof window.setPocketMechanicTheme === 'function') {
+          window.setPocketMechanicTheme(theme.toLowerCase());
+        } else {
+          document.documentElement.setAttribute('data-theme', theme.toLowerCase());
+          document.documentElement.setAttribute('data-bs-theme', theme.toLowerCase());
+          try { localStorage.setItem('pm_theme', theme.toLowerCase()); } catch (e) {}
+          document.cookie = 'pm_theme=' + theme.toLowerCase() + '; path=/; max-age=31536000; SameSite=Lax';
+          await fetch('/api/settings/update', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: 'THEME_MODE', value: theme }) });
+        }
+
         const ok = document.getElementById('runtimeSaveSuccess');
         ok.style.display = 'block';
         setTimeout(() => { ok.style.display = 'none'; }, 3000);

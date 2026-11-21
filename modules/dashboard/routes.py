@@ -30,7 +30,7 @@ def home():
                 """
                 SELECT m.*, mv.cooling_type, mv.brake_type, mv.abs_type, mv.final_drive_type,
                        mv.fuel_delivery_type, mv.wheel_type, ms.*,
-                       mm.name as model_name, mm.silhouette_code, mfg.name as mfg_name, mfg.logo_slug
+                       mm.name as model_name, mm.category, mm.image_url, mm.silhouette_code, mfg.name as mfg_name, mfg.logo_slug
                 FROM motorcycles m
                 LEFT JOIN motorcycle_variants mv ON m.variant_id = mv.variant_id
                 LEFT JOIN motorcycle_specifications ms ON mv.variant_id = ms.variant_id
@@ -75,9 +75,13 @@ def home():
             group_b_weekly = [c for c in applicable_components if c['check_interval_group'] == 'Weekly']
             group_c_periodic = [c for c in applicable_components if c['check_interval_group'] == 'Periodic']
 
-            # 3. Read developer settings
+            # 3. Read developer settings (Defaults first, user-specific second)
             cursor.execute(
-                "SELECT setting_key, setting_value FROM application_settings WHERE user_id = %s OR user_id IS NULL",
+                """
+                SELECT setting_key, setting_value FROM application_settings
+                WHERE user_id = %s OR user_id IS NULL
+                ORDER BY (user_id IS NOT NULL) ASC, updated_at ASC
+                """,
                 (current_user.id,)
             )
             settings_rows = cursor.fetchall()
@@ -154,7 +158,6 @@ def home():
     )
 
 @dashboard_bp.route('/api/settings/update', methods=['POST'])
-@login_required
 def update_setting():
     data = request.json or {}
     key = data.get('key')
@@ -162,21 +165,29 @@ def update_setting():
     if not key or val is None:
         return jsonify({"error": "Missing key or value"}), 400
 
-    conn = get_db_connection()
-    try:
-        with conn.cursor() as cursor:
-            cursor.execute(
-                """
-                INSERT INTO application_settings (user_id, setting_key, setting_value)
-                VALUES (%s, %s, %s)
-                ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)
-                """,
-                (current_user.id, key, str(val))
-            )
-        log_audit(current_user.id, "UPDATE_SETTING", "application_settings", key, {"value": val})
-        return jsonify({"success": True, "key": key, "value": val})
-    finally:
-        conn.close()
+    if key == 'THEME_MODE':
+        session['THEME_MODE'] = str(val).upper()
+
+    if current_user.is_authenticated:
+        conn = get_db_connection()
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    """
+                    INSERT INTO application_settings (user_id, setting_key, setting_value)
+                    VALUES (%s, %s, %s)
+                    ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value), updated_at = CURRENT_TIMESTAMP
+                    """,
+                    (current_user.id, key, str(val))
+                )
+            log_audit(current_user.id, "UPDATE_SETTING", "application_settings", key, {"value": val})
+        finally:
+            conn.close()
+
+    resp = jsonify({"success": True, "key": key, "value": val})
+    if key == 'THEME_MODE':
+        resp.set_cookie('pm_theme', str(val).lower(), max_age=31536000, samesite='Lax', path='/')
+    return resp
 
 @dashboard_bp.route('/garage')
 @login_required
@@ -278,9 +289,13 @@ def settings():
             # Total records across all tables
             total_records = sum((t.get('table_rows') or 0) for t in db_tables)
 
-            # 3. Current user settings
+            # 3. Current user settings (defaults first, user overrides second)
             cursor.execute(
-                "SELECT setting_key, setting_value FROM application_settings WHERE user_id = %s OR user_id IS NULL",
+                """
+                SELECT setting_key, setting_value FROM application_settings
+                WHERE user_id = %s OR user_id IS NULL
+                ORDER BY (user_id IS NOT NULL) ASC, updated_at ASC
+                """,
                 (current_user.id,)
             )
             settings_rows = cursor.fetchall()
